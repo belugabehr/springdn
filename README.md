@@ -44,6 +44,19 @@ tail -f app.log
 
 ```
 
+## Health and Status
+
+SpringDn uses [Spring Boot Actuator](https://www.baeldung.com/spring-boot-actuators) for metrics and health status.  The default port is 8080.
+
+```
+http://localhost:8080/actuator/info
+http://localhost:8080/actuator/health
+http://localhost:8080/actuator/configprops
+http://localhost:8080/actuator/threaddump
+http://localhost:8080/actuator/metrics
+http://localhost:8080/actuator/metrics/{metric.name}
+```
+
 ## SpringDN Design
 
 ### HDFS Write Path
@@ -114,4 +127,4 @@ SpringDN has a total of three thread pools which support all DataNode operations
 * There are places where the [code](https://github.com/apache/hadoop/blob/trunk/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/DataXceiver.java#L682) cares about the name of the client being provided when a data transfer connection is made.  Do not do that.  Client name should be for logging and troubleshooting.
 * When a pipeline is initialized, it is done so by passing a OpWriteBlockProto object. This object, among other things, has a list of all the nodes in the pipeline.  The OpWriteBlockProto object is passed along the pipeline and each node [removes its own entry from the list of nodes as it is passed along](https://github.com/apache/hadoop/blob/trunk/hadoop-hdfs-project/hadoop-hdfs-client/src/main/java/org/apache/hadoop/hdfs/protocol/datatransfer/Sender.java#L146-L162).  Instead of modifying the various Lists containing information about each node in the pipeline, include a 'hop' int32 field which is incremented at each node.  This will require a small amount of additional network capacity since the list is not pared down, however, it will require less CPU since all that is required is a quick increment of a counter.  Also, it may be helpful for debugging to look at the OpWriteBlockProto object at each hop to determine where it went.
 * Include a (optional) random UUID in the OpWriteBlockProto object so that each node in the pipeline can log the UUID and therefore trace the pipeline through the logging of all the nodes involved.
-* Produce an HDFS data transfer async-client
+* Produce an HDFS data transfer async-client which has two modes: pipeline and spread
