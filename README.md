@@ -57,6 +57,27 @@ http://localhost:8080/actuator/metrics
 http://localhost:8080/actuator/metrics/{metric.name}
 ```
 
+## Configuration
+
+```
+# Comma-separated list of NameNodes
+# Must be proper URI with 'hdfs' scheme
+dn.namenode.servers=hdfs://127.0.0.1:8022
+
+# Location to store data blocks.
+# Any sub-directories will be automatically initialized by the SpringDN
+dn.data.blocks.dir=/data
+
+# Location for LevelDB databases and other metadata
+dn.meta.dir=/var/lib/springdn
+
+# The HDFS Data Transfer Protocol port
+dn.ipc.transfer.port=51515
+
+# The Web UI port used for health and status
+server.port=8080
+```
+
 ## SpringDN Design
 
 ### HDFS Write Path
