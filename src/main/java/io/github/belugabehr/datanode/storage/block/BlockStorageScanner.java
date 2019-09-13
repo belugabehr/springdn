@@ -59,7 +59,7 @@ public class BlockStorageScanner implements Runnable, Closeable {
             validateChecksum(blockMeta, checksumInfo);
           } catch (ChecksumException cse) {
             try {
-              this.storageService.deleteBlock(blockMeta.getBlockId(), blockMeta.getStorageInfo().getVolumeUUID());
+              this.storageService.deleteBlock(blockMeta.getBlockId(), blockMeta.getStorageInfo().getVolumeId());
             } catch (IOException ioe) {
               LOG.warn("Unable to delete dile with corrupt checksum: {}", blockMeta.getBlockId());
             } finally {
@@ -87,7 +87,7 @@ public class BlockStorageScanner implements Runnable, Closeable {
 
     final FixedLengthBlockCheckedOutputStream os = new FixedLengthBlockCheckedOutputStream(bm.getChecksumChunkSize());
 
-    try (final FileChannel channel = this.storageService.openBlock(blockID, bm.getStorageInfo().getVolumeUUID())) {
+    try (final FileChannel channel = this.storageService.openBlock(blockID, bm.getStorageInfo().getVolumeId())) {
 
       final InputStream is = new LimitInputStream(Channels.newInputStream(channel), bm.getStorageInfo().getBlockSize());
 

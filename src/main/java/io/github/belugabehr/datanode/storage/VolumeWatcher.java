@@ -6,6 +6,7 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
@@ -64,16 +65,19 @@ public class VolumeWatcher implements Runnable {
       final WatchEvent<Path> ev = (WatchEvent<Path>) event;
       final Path filename = ev.context();
 
-      // Verify that the new file is a directory file.
-      // Resolve the filename against the directory.
-      // If the filename is "test" and the directory is "foo",
-      // the resolved name is "test/foo".
       final Path child = this.rootDataPath.resolve(filename);
 
-      // TODO: Check that this is a directory
-      
-      // TODO: Implement this method
-      this.volumeInitializer.initialize(child);
+      try {
+        final boolean isDirectory = Files.isDirectory(child);
+        LOG.info("Detected new file in mount directory [{}][directory:{}]", child, isDirectory);
+
+        if (Files.isDirectory(child)) {
+          this.volumeInitializer.init(child);
+        }
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
     }
 
     // Reset the key -- this step is critical if you want to

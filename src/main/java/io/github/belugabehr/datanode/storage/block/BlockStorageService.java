@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,8 +37,8 @@ public class BlockStorageService {
   @Autowired
   private BlockPlacementPolicy placementPolicy;
 
-  public BlockHandle initializeBlock(final BlockIdentifier blockID, final long blockSize) throws Exception {
-    final Volume volume = this.volumeManager.getNextAvailableVolume(blockSize);
+  public BlockHandle initializeBlock(final UUID volumeGroupId, final BlockIdentifier blockID, final long blockSize) throws Exception {
+    final Volume volume = this.volumeManager.getNextAvailableVolume(volumeGroupId, blockSize);
 
     final Path blockTmpFilePath = volume.getTempFile();
 
@@ -59,7 +60,7 @@ public class BlockStorageService {
   }
 
   public FileChannel openBlock(final BlockIdentifier blockID, final String volumeUUID) throws IOException {
-    final Optional<Volume> volume = this.volumeManager.getVolume(volumeUUID);
+    final Optional<Volume> volume = this.volumeManager.getVolume(UUID.fromString(volumeUUID));
     if (volume.isPresent()) {
       final Path finalBlockPath = this.placementPolicy.generateBlockPath(volume.get(), blockID);
       try {
@@ -95,7 +96,7 @@ public class BlockStorageService {
 
   public void deleteBlock(final BlockIdentifier blockID, final String volumeUUID) throws IOException {
     LOG.info("Delete from volume [{}]: block {}", volumeUUID, blockID);
-    final Optional<Volume> volume = this.volumeManager.getVolume(volumeUUID);
+    final Optional<Volume> volume = this.volumeManager.getVolume(UUID.fromString(volumeUUID));
     if (volume.isPresent()) {
       final Path finalBlockPath = this.placementPolicy.generateBlockPath(volume.get(), blockID);
       try {

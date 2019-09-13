@@ -1,6 +1,6 @@
 package io.github.belugabehr.datanode.storage;
 
-public class StorageDetails {
+public class VolumeGroupProperties {
 
   private String description;
   private String directory;

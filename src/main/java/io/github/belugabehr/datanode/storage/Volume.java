@@ -11,7 +11,7 @@ public interface Volume {
 
   Path getPath();
 
-  UUID getUuid();
+  UUID getId();
 
   Path getTempFile() throws IOException;
 

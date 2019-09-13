@@ -21,8 +21,9 @@ message BlockMetaData {
 }
 
 message StorageInfo {
-  string volumeUUID = 1;
-  int32 blockSize = 2;
+  string volumeGroupId = 1;
+  string volumeId = 2;
+  int32 blockSize = 3;
 }
 
 message ChecksumInfo {
@@ -36,14 +37,6 @@ message DataNodeInfo {
 	// string clusterID = 2;
 	google.protobuf.Timestamp cTime = 2;
 }
-
-// message NameNodeInfo {
-//     string blockPoolID = 1;
-//     int32 namespaceID = 2;
-//     string clusterID = 3;
-//     sint32 layoutVersion = 4;
-//     uint64 cTime = 5;
-// }
 
 message BlockPoolInfo {
     string blockPoolID = 1;

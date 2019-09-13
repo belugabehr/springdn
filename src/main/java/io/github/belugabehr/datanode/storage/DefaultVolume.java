@@ -1,50 +1,35 @@
 package io.github.belugabehr.datanode.storage;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Comparator;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
-import io.github.belugabehr.datanode.util.DataNodeUUIDUtil;
+import com.google.common.base.Preconditions;
 
 public class DefaultVolume implements Volume {
+
+  private static final Path TMP_DIR = Path.of("tmp");
 
   private final Path dataPath;
   private final Path tmpDir;
   private final FileStore fileStore;
   private final AtomicInteger ioErrorCount;
 
-  private UUID uuid;
+  private UUID id;
 
-  public DefaultVolume(final Path dataPath) {
+  public DefaultVolume(final UUID id, final Path dataPath) {
+    this.id = id;
     this.dataPath = dataPath;
-    this.tmpDir = this.dataPath.resolve("tmp");
+    this.tmpDir = this.dataPath.resolve(TMP_DIR);
     this.fileStore = determineFileStore(dataPath);
     this.ioErrorCount = new AtomicInteger();
-  }
 
-  public Volume init() throws IOException {
-    this.uuid = DataNodeUUIDUtil.getUUID(dataPath.toString());
-
-    createTempDirectory(this.tmpDir);
-
-    return this;
-  }
-
-  private void createTempDirectory(final Path tempDir) throws IOException {
-    if (Files.exists(tempDir)) {
-      try (Stream<Path> walk = Files.walk(tempDir, 1)) {
-        walk.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
-      }
-    }
-    Files.createDirectory(tempDir);
+    Preconditions.checkState(Files.isDirectory(this.tmpDir));
   }
 
   /**
@@ -84,8 +69,8 @@ public class DefaultVolume implements Volume {
   }
 
   @Override
-  public UUID getUuid() {
-    return uuid;
+  public UUID getId() {
+    return id;
   }
 
   @Override
@@ -95,7 +80,6 @@ public class DefaultVolume implements Volume {
 
   @Override
   public Path getTempFile() throws IOException {
-    // TODO: Pool this so each request does not have to block
     return Files.createTempFile(this.tmpDir, "block-", ".tmp.data");
   }
 
@@ -117,6 +101,6 @@ public class DefaultVolume implements Volume {
   @Override
   public String toString() {
     return "DefaultVolume [dataPath=" + dataPath + ", tmpDir=" + tmpDir + ", fileStore=" + fileStore + ", ioErrorCount="
-        + ioErrorCount + ", uuid=" + uuid + "]";
+        + ioErrorCount + ", id=" + id + "]";
   }
 }

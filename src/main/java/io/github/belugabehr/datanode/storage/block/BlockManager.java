@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.time.Instant;
+import java.util.UUID;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.hdfs.protocol.Block;
@@ -42,11 +43,15 @@ public class BlockManager {
   @Autowired
   private IncrementalBlockListener incrementalBlockReportListener;
 
-  public BlockHandle initializeBlock(final BlockIdentifier blockID, final long blockSize) throws Exception {
-    final BlockHandle handle = storageService.initializeBlock(blockID, blockSize);
+  public BlockHandle initializeBlock(final String storageId, final BlockIdentifier blockID, final long blockSize)
+      throws Exception {
 
-    final StorageInfo storageInfo = StorageInfo.newBuilder().setBlockSize(Math.toIntExact(blockSize))
-        .setVolumeUUID(handle.getVolume().getUuid().toString()).build();
+    // Strip "DS-" no idea why it is setup like that
+    final UUID volumeGroupId = UUID.fromString(storageId.substring(3));
+    final BlockHandle handle = storageService.initializeBlock(volumeGroupId, blockID, blockSize);
+
+    final StorageInfo storageInfo = StorageInfo.newBuilder().setVolumeGroupId(storageId.substring(3))
+        .setBlockSize(Math.toIntExact(blockSize)).setVolumeId(handle.getVolume().getId().toString()).build();
 
     this.incrementalBlockReportListener.publishBlockReceiving(blockID, storageInfo);
     return handle;
@@ -62,7 +67,7 @@ public class BlockManager {
         ((bytesWritten + checksumChunkSize - 1) / checksumChunkSize) == (chunkedChecksums.length / Ints.BYTES));
 
     final StorageInfo storageInfo = StorageInfo.newBuilder().setBlockSize(bytesWritten)
-        .setVolumeUUID(blockHandle.getVolume().getUuid().toString()).build();
+        .setVolumeId(blockHandle.getVolume().getId().toString()).build();
 
     final ChecksumInfo checksumInfo = ChecksumInfo.newBuilder().setChecksumChunkSize(checksumChunkSize)
         .setChecksumChunks(ByteString.copyFrom(chunkedChecksums)).build();
@@ -89,7 +94,7 @@ public class BlockManager {
     final Optional<BlockMetaData> blockMeta = this.blockMetaDataService.getBlockMetaData(blockID);
 
     if (blockMeta.isPresent()) {
-      this.storageService.deleteBlock(blockID, blockMeta.get().getStorageInfo().getVolumeUUID());
+      this.storageService.deleteBlock(blockID, blockMeta.get().getStorageInfo().getVolumeId());
       this.blockMetaDataService.deletedBlock(blockID);
       this.incrementalBlockReportListener.publishBlockDeleted(blockID, blockMeta.get().getStorageInfo());
     }
@@ -108,7 +113,7 @@ public class BlockManager {
       throw new IOException("No such block exists: " + blockID);
     }
 
-    final FileChannel channel = this.storageService.openBlock(blockID, blockMeta.get().getStorageInfo().getVolumeUUID());
+    final FileChannel channel = this.storageService.openBlock(blockID, blockMeta.get().getStorageInfo().getVolumeId());
     return Pair.of(blockMeta.get(), channel);
   }
   

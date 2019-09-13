@@ -80,7 +80,7 @@ public class IncrementalBlockListener {
 
     final DatanodeRegistration registration = this.blockPoolManager.getDatanodeRegistration(ibrs.getT2().getKey());
 
-    Flux.fromIterable(batch).collectMultimap(bmd -> bmd.getStorageInfo().getVolumeUUID()).subscribe(x -> {
+    Flux.fromIterable(batch).collectMultimap(bmd -> bmd.getStorageInfo().getVolumeGroupId()).subscribe(x -> {
       final Map<String, Collection<Wrapper>> volumeMap = x;
 
       LOG.debug("Reporting incrementally blocks: {}", volumeMap);

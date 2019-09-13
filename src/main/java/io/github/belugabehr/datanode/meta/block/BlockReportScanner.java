@@ -112,7 +112,7 @@ public class BlockReportScanner {
 
   private void sendBlockReport(final long blockReportID, final Tuple2<URI, BlockBatch> brg) {
     final Collection<Pair<BlockIdentifier, StorageInfo>> batch = brg.getT2().getItems();
-    Flux.fromIterable(batch).collectMultimap(p -> p.getValue().getVolumeUUID()).subscribe(pmap -> {
+    Flux.fromIterable(batch).collectMultimap(p -> p.getValue().getVolumeGroupId()).subscribe(pmap -> {
       final Map<String, Collection<Pair<BlockIdentifier, StorageInfo>>> volumeMap = pmap;
 
       LOG.debug("Reporting blocks: {}", volumeMap);

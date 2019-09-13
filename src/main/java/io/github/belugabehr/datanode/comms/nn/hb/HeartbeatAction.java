@@ -22,7 +22,7 @@ import io.github.belugabehr.datanode.comms.nn.NameNodeConnectionPool;
 import io.github.belugabehr.datanode.events.InvalidateBlockListener;
 import io.github.belugabehr.datanode.has.Metrics;
 import io.github.belugabehr.datanode.storage.StorageManager;
-import io.github.belugabehr.datanode.storage.Volume;
+import io.github.belugabehr.datanode.storage.VolumeGroup;
 import io.github.belugabehr.datanode.util.HadoopCompatible;
 import io.micrometer.core.instrument.MeterRegistry;
 
@@ -30,19 +30,19 @@ public class HeartbeatAction implements Runnable {
 
   private static Logger LOG = LoggerFactory.getLogger(HeartbeatAction.class);
 
-  private StorageManager volumeManager;
+  private final StorageManager volumeManager;
 
-  private MeterRegistry meterRegistry;
+  private final MeterRegistry meterRegistry;
 
-  private InvalidateBlockListener invalidateBlockListener;
+  private final InvalidateBlockListener invalidateBlockListener;
 
-  private URI nameNodeURI;
+  private final URI nameNodeURI;
 
-  private NameNodeConnectionPool connections;
+  private final NameNodeConnectionPool connections;
 
-  private BlockPoolManager blockPoolManager;
+  private final BlockPoolManager blockPoolManager;
 
-  private String blockPoolID;
+  private final String blockPoolID;
 
   public HeartbeatAction(StorageManager volumeManager, MeterRegistry meterRegistry,
       InvalidateBlockListener invalidateBlockListener, URI nameNodeURI, NameNodeConnectionPool connections,
@@ -59,14 +59,15 @@ public class HeartbeatAction implements Runnable {
   @Override
   public void run() {
     try {
-      final Collection<Volume> volumes = this.volumeManager.getVolumes();
+      final Collection<VolumeGroup> volumeGroups = this.volumeManager.getVolumeGroups();
       Collection<StorageReport> reports = new ArrayList<>();
-      for (final Volume v : volumes) {
-        final DatanodeStorage dnStorage = new DatanodeStorage(HadoopCompatible.getDatanodeStorageUuid(v.getUuid()));
+      for (final VolumeGroup volumeGroup : volumeGroups) {
+        final DatanodeStorage dnStorage =
+            new DatanodeStorage(HadoopCompatible.getDatanodeStorageUuid(volumeGroup.getId()));
 
-        final long totalSpace = v.getTotalSpace();
-        final long usableSpace = v.getUsableSpace();
-        final boolean isFailed = v.isFailed();
+        final long totalSpace = volumeGroup.getTotalSpace();
+        final long usableSpace = volumeGroup.getUsableSpace();
+        final boolean isFailed = volumeGroup.isFailed();
 
         reports.add(new StorageReport(dnStorage, isFailed, totalSpace, 0L, usableSpace, 0L, 0L));
       }

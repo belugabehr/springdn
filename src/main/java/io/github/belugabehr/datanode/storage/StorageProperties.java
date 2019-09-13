@@ -9,19 +9,19 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties("datanode.storage")
 public class StorageProperties {
-  private Map<String, StorageDetails> placement = new HashMap<>();
+  private Map<String, VolumeGroupProperties> groups = new HashMap<>();
 
-  public Map<String, StorageDetails> getPlacement() {
-    return placement;
+  public Map<String, VolumeGroupProperties> getGroups() {
+    return groups;
   }
 
-  public void setPlacement(Map<String, StorageDetails> placement) {
-    this.placement = placement;
+  public void setGroups(Map<String, VolumeGroupProperties> groups) {
+    this.groups = groups;
   }
 
   @Override
   public String toString() {
-    return "StorageProperties [placement=" + placement + "]";
+    return "StorageProperties [groups=" + groups + "]";
   }
 
 }

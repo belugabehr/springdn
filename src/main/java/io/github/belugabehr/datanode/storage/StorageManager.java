@@ -1,18 +1,16 @@
 package io.github.belugabehr.datanode.storage;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
@@ -32,7 +30,7 @@ import io.micrometer.core.instrument.Tags;
 public class StorageManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(StorageManager.class);
-  
+
   @Autowired
   private VolumeWatcher volumeWatcher;
 
@@ -42,54 +40,71 @@ public class StorageManager {
   @Autowired
   private StorageProperties storageProperties;
 
-  private final Map<UUID, Volume> volumeMap = Maps.newHashMap();
+  @Autowired
+  private VolumeGroupInitializer volumeGroupInitializer;
+
+  @Autowired
+  private VolumeInitializer volumeInitializer;
+
+  private final Map<UUID, VolumeGroup> volumeGroups = Maps.newHashMap();
+
+  private final Map<UUID, Volume> volumes = Maps.newHashMap();
 
   @PostConstruct
   public void init() throws IOException {
-    for (final Entry<String, StorageDetails> entry : this.storageProperties.getPlacement().entrySet()) {
-      LOG.info("Processing storage: {}", entry.getKey());
+    for (final Entry<String, VolumeGroupProperties> entry : this.storageProperties.getGroups().entrySet()) {
+      LOG.info("Processing storage: {} [{}]", entry.getKey(), entry.getValue().getDescription());
 
       final String pathStr = entry.getValue().getDirectory();
       final Path storageDirectory = Paths.get(pathStr);
-      final Collection<Volume> volumes = doDiscoverVolumes(storageDirectory);
 
-      volumes.forEach(v -> {
-        this.volumeMap.put(v.getUuid(), v);
+      final Map<UUID, Volume> volumeMap = Maps.newHashMap();
+
+      final UUID volumeGroupId = this.volumeGroupInitializer.init(storageDirectory);
+
+      final Collection<Path> availableVolumes = doDiscoverVolumes(storageDirectory);
+      availableVolumes.forEach(v -> {
+        try {
+          final UUID volumeId = this.volumeInitializer.init(v);
+          final Volume volume = new DefaultVolume(volumeId, v);
+          volumeMap.put(volumeId, volume);
+        } catch (IOException ioe) {
+          LOG.error("Could not initialize and register a volume [{}]. Skipped.", v, ioe);
+        }
       });
+
+      this.volumes.putAll(volumeMap);
+
+      final VolumeGroup volumeGroup = new VolumeGroup();
+      volumeGroup.setId(volumeGroupId);
+      volumeGroup.setName(entry.getKey());
+      volumeGroup.setDescription(entry.getValue().getDescription());
+      volumeGroup.setVolumes(volumeMap);
+
+      this.volumeGroups.put(volumeGroupId, volumeGroup);
 
       this.volumeWatcher.watch(storageDirectory);
     }
 
-    this.meterRegisty.gaugeCollectionSize("datanode.fs.vol.count", Tags.empty(), this.volumeMap.keySet());
+    this.meterRegisty.gaugeCollectionSize("datanode.fs.vol.group.count", Tags.empty(), this.volumeGroups.keySet());
   }
 
-  public Volume getNextAvailableVolume(final long requestedBlockSize) {
-    final int volCount = this.volumeMap.size();
-    return Iterables.get(this.volumeMap.values(), ThreadLocalRandom.current().nextInt(volCount));
+  public Volume getNextAvailableVolume(final UUID volumeGroupId, final long requestedBlockSize) {
+    final Collection<Volume> volumes = this.volumeGroups.get(volumeGroupId).getVolumes().values();
+    final int volCount = volumes.size();
+    return Iterables.get(volumes, ThreadLocalRandom.current().nextInt(volCount));
   }
 
-  protected Collection<Volume> doDiscoverVolumes(final Path dataPath) throws IOException {
-    final DirectoryStream.Filter<Path> filter = new DirectoryStream.Filter<Path>() {
-      public boolean accept(Path file) throws IOException {
-        return Files.isDirectory(file);
-      }
-    };
-
-    final List<Volume> volumes = new ArrayList<>();
-    try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dataPath, filter)) {
-      for (final Path p : stream) {
-        volumes.add(new DefaultVolume(p).init());
-      }
-    }
-    return volumes;
+  protected Collection<Path> doDiscoverVolumes(final Path dataPath) throws IOException {
+    return Files.list(dataPath).filter(Files::isDirectory).collect(Collectors.toList());
   }
 
-  public Optional<Volume> getVolume(final String volumeUUID) {
-    return Optional.fromNullable(this.volumeMap.get(UUID.fromString(volumeUUID)));
+  public Optional<Volume> getVolume(final UUID volumeUUID) {
+    return Optional.fromNullable(this.volumes.get(volumeUUID));
   }
 
-  public Collection<Volume> getVolumes() {
-    return Collections.unmodifiableCollection(this.volumeMap.values());
+  public Collection<VolumeGroup> getVolumeGroups() {
+    return Collections.unmodifiableCollection(this.volumeGroups.values());
   }
 
 }

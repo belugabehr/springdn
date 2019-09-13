@@ -20,6 +20,7 @@ import com.google.common.collect.Multimap;
 import io.github.belugabehr.datanode.meta.dfs.DfsMetaDataService;
 import io.github.belugabehr.datanode.storage.StorageManager;
 import io.github.belugabehr.datanode.storage.Volume;
+import io.github.belugabehr.datanode.storage.VolumeGroup;
 import io.github.belugabehr.datanode.util.SpreadDirectory;
 
 @Service
@@ -41,18 +42,21 @@ public class BlockPoolManager {
   }
 
   public void initialize(final String blockPoolId) {
-    final Collection<Volume> volumes = this.volumeManager.getVolumes();
-    for (final Volume volume : volumes) {
-      final Path volumeRoot = volume.getPath();
-      final Path blockPoolRoot = volumeRoot.resolve(blockPoolId);
+    // TODO: Turn this into its own BlockPoolInitializer bean
+    final Collection<VolumeGroup> volumeGroups = this.volumeManager.getVolumeGroups();
+    for (final VolumeGroup volumeGroup : volumeGroups) {
+      for (final Volume volume : volumeGroup.getVolumes().values()) {
+        final Path volumeRoot = volume.getPath();
+        final Path blockPoolRoot = volumeRoot.resolve(blockPoolId);
 
-      final SpreadDirectory spreadDirectory =
-          SpreadDirectory.newBuilder().rootPath(blockPoolRoot).levelOne(16).levelTwo(256).build();
+        final SpreadDirectory spreadDirectory =
+            SpreadDirectory.newBuilder().rootPath(blockPoolRoot).levelOne(16).levelTwo(256).build();
 
-      try {
-        spreadDirectory.spread();
-      } catch (IOException ioe) {
-        volume.reportError(ioe);
+        try {
+          spreadDirectory.spread();
+        } catch (IOException ioe) {
+          volume.reportError(ioe);
+        }
       }
     }
   }

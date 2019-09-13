@@ -16,7 +16,7 @@ datanode:
     transfer:
       port: 51515
   storage:
-    placement:
+    groups:
       default:
         description: "Default location for blocks"
         directory: "/data"

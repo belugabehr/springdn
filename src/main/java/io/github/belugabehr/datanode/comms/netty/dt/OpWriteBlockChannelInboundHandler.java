@@ -69,7 +69,8 @@ public class OpWriteBlockChannelInboundHandler extends DefaultSimpleChannelInbou
     final BlockIdentifier blockID = DataNodeDomain.BlockIdentifier.newBuilder().setBlockPoolId(block.getPoolId())
         .setBlockId(block.getBlockId()).setGenerationStamp(block.getGenerationStamp()).build();
 
-    final BlockHandle blockHandle = getStorageManager(ctx).initializeBlock(blockID, block.getNumBytes());
+    final BlockHandle blockHandle =
+        getStorageManager(ctx).initializeBlock(op.getStorageId(), blockID, block.getNumBytes());
 
     if (!lastInPipeline) {
       ctx.pipeline().addLast(new OpWriteBlockProxyFrontendHandler(op));
