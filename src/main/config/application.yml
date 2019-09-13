@@ -16,9 +16,10 @@ datanode:
     transfer:
       port: 51515
   storage:
-    default:
-      description: "Default location for blocks"
-      directory: "/data"
+    placement:
+      default:
+        description: "Default location for blocks"
+        directory: "/data"
   dfs:
     servers:
       - "hdfs://127.0.0.1:8022"

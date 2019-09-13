@@ -1,6 +1,5 @@
 package io.github.belugabehr.datanode.storage;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,14 +9,19 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties("datanode.storage")
 public class StorageProperties {
-  private final Map<String, StorageDetails> storages = new HashMap<>();
+  private Map<String, StorageDetails> placement = new HashMap<>();
 
-  public Map<String, StorageDetails> getStorages() {
-    return Collections.unmodifiableMap(this.storages);
+  public Map<String, StorageDetails> getPlacement() {
+    return placement;
+  }
+
+  public void setPlacement(Map<String, StorageDetails> placement) {
+    this.placement = placement;
   }
 
   @Override
   public String toString() {
-    return "StorageProperties [storages=" + storages + "]";
+    return "StorageProperties [placement=" + placement + "]";
   }
+
 }

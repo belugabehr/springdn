@@ -46,7 +46,7 @@ public class StorageManager {
 
   @PostConstruct
   public void init() throws IOException {
-    for (final Entry<String, StorageDetails> entry : this.storageProperties.getStorages().entrySet()) {
+    for (final Entry<String, StorageDetails> entry : this.storageProperties.getPlacement().entrySet()) {
       LOG.info("Processing storage: {}", entry.getKey());
 
       final String pathStr = entry.getValue().getDirectory();
@@ -56,7 +56,7 @@ public class StorageManager {
       volumes.forEach(v -> {
         this.volumeMap.put(v.getUuid(), v);
       });
-      
+
       this.volumeWatcher.watch(storageDirectory);
     }
 
