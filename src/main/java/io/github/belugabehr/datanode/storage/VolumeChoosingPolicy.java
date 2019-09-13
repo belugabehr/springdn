@@ -1,4 +1,4 @@
-package io.github.belugabehr.datanode.storage.volume;
+package io.github.belugabehr.datanode.storage;
 
 import java.io.IOException;
 import java.util.Collection;

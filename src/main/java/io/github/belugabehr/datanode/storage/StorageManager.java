@@ -1,50 +1,66 @@
-package io.github.belugabehr.datanode.storage.volume;
+package io.github.belugabehr.datanode.storage;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javax.annotation.PostConstruct;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 
 @Service
-public class VolumeManager {
+public class StorageManager {
+
+  private static final Logger LOG = LoggerFactory.getLogger(StorageManager.class);
+  
+  @Autowired
+  private VolumeWatcher volumeWatcher;
 
   @Autowired
   private MeterRegistry meterRegisty;
 
-  @Value("${dn.data.blocks.dir:/data}")
-  private Path dataPath;
+  @Autowired
+  private StorageProperties storageProperties;
 
   private final Map<UUID, Volume> volumeMap = Maps.newHashMap();
 
   @PostConstruct
   public void init() throws IOException {
-    final Collection<Volume> volumes = doDiscoverVolumes(dataPath);
-    Preconditions.checkState(!volumes.isEmpty(), "Must be at least one volume");
+    for (final Entry<String, StorageDetails> entry : this.storageProperties.getStorages().entrySet()) {
+      LOG.info("Processing storage: {}", entry.getKey());
 
-    volumes.forEach(v -> {
-      this.volumeMap.put(v.getUuid(), v);
-      this.meterRegisty.counter("datanode.fs.vol.count").increment();
-    });
+      final String pathStr = entry.getValue().getDirectory();
+      final Path storageDirectory = Paths.get(pathStr);
+      final Collection<Volume> volumes = doDiscoverVolumes(storageDirectory);
+
+      volumes.forEach(v -> {
+        this.volumeMap.put(v.getUuid(), v);
+      });
+      
+      this.volumeWatcher.watch(storageDirectory);
+    }
+
+    this.meterRegisty.gaugeCollectionSize("datanode.fs.vol.count", Tags.empty(), this.volumeMap.keySet());
   }
 
   public Volume getNextAvailableVolume(final long requestedBlockSize) {

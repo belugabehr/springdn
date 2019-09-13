@@ -1,4 +1,4 @@
-package io.github.belugabehr.datanode.storage;
+package io.github.belugabehr.datanode.storage.block;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -17,8 +17,8 @@ import org.springframework.stereotype.Service;
 import com.cloudera.datanode.domain.DataNodeDomain.BlockIdentifier;
 import com.google.common.base.Optional;
 
-import io.github.belugabehr.datanode.storage.volume.Volume;
-import io.github.belugabehr.datanode.storage.volume.VolumeManager;
+import io.github.belugabehr.datanode.storage.StorageManager;
+import io.github.belugabehr.datanode.storage.Volume;
 import io.github.belugabehr.datanode.util.WatchedFileChannel;
 import io.github.belugabehr.datanode.util.ex.BlockNotFoundException;
 
@@ -31,7 +31,7 @@ public class BlockStorageService {
   private static final Logger LOG = LoggerFactory.getLogger(BlockStorageService.class);
 
   @Autowired
-  private VolumeManager volumeManager;
+  private StorageManager volumeManager;
 
   @Autowired
   private BlockPlacementPolicy placementPolicy;

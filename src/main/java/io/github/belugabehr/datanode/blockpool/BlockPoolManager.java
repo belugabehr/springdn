@@ -18,8 +18,8 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
 import io.github.belugabehr.datanode.meta.dfs.DfsMetaDataService;
-import io.github.belugabehr.datanode.storage.volume.Volume;
-import io.github.belugabehr.datanode.storage.volume.VolumeManager;
+import io.github.belugabehr.datanode.storage.StorageManager;
+import io.github.belugabehr.datanode.storage.Volume;
 import io.github.belugabehr.datanode.util.SpreadDirectory;
 
 @Service
@@ -29,7 +29,7 @@ public class BlockPoolManager {
   private DfsMetaDataService dfsMetaDataService;
 
   @Autowired
-  private VolumeManager volumeManager;
+  private StorageManager volumeManager;
 
   private final Map<String, DatanodeRegistration> registrations = new ConcurrentHashMap<>();
 

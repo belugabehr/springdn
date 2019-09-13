@@ -1,0 +1,40 @@
+info:
+    app:
+      name: "Spring DataNode"
+      description: "HDFS DataNode with a Spring foundation"
+      version: "0.0.1"
+
+#     TODO: Integrate with Maven filter plugin
+#     version: '@project.version@'
+#     build-number: '@build.number@'
+
+datanode:
+  meta:
+    home: "/var/lib/springdn"
+    cache: 33554432
+  ipc:
+    transfer:
+      port: 51515
+  storage:
+    default:
+      description: "Default location for blocks"
+      directory: "/data"
+  dfs:
+    servers:
+      - "hdfs://127.0.0.1:8022"
+
+spring:
+  main:
+    banner-mode: "off"
+
+server:
+  port: 8080
+  tomcat:
+    min-spare-threads: 1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "info,health,metrics,threaddump,configprops"
+

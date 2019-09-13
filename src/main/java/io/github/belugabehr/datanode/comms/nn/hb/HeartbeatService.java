@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import io.github.belugabehr.datanode.blockpool.BlockPoolManager;
 import io.github.belugabehr.datanode.comms.nn.NameNodeConnectionPool;
 import io.github.belugabehr.datanode.events.InvalidateBlockListener;
-import io.github.belugabehr.datanode.storage.volume.VolumeManager;
+import io.github.belugabehr.datanode.storage.StorageManager;
 import io.micrometer.core.instrument.MeterRegistry;
 
 @Service
@@ -23,7 +23,7 @@ public class HeartbeatService {
   private static Logger LOG = LoggerFactory.getLogger(HeartbeatService.class);
 
   @Autowired
-  private VolumeManager volumeManager;
+  private StorageManager volumeManager;
 
   @Autowired
   private MeterRegistry meterRegistry;

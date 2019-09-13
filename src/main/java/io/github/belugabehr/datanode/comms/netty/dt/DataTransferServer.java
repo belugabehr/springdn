@@ -9,11 +9,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import io.github.belugabehr.datanode.IpcProperties;
 import io.github.belugabehr.datanode.has.Metrics;
-import io.github.belugabehr.datanode.storage.BlockManager;
+import io.github.belugabehr.datanode.storage.block.BlockManager;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -35,8 +35,8 @@ public class DataTransferServer implements Closeable {
   @Autowired
   private MeterRegistry meterRegistry;
 
-  @Value("${dn.ipc.transfer.port:51515}")
-  private int dataTransferPort;
+  @Autowired
+  private IpcProperties ipcProperties;
 
   @Autowired
   @Qualifier("dtServerBootstrap")
@@ -72,7 +72,7 @@ public class DataTransferServer implements Closeable {
     this.meterRegistry.gauge(Metrics.IPC_XCEIVER_ACTIVE_COUNT.registryName(),
         this.connectionCounterChannelHandler.getConnectionCount());
 
-    this.serverChannel = this.serverBootstrap.bind(dataTransferPort).sync();
+    this.serverChannel = this.serverBootstrap.bind(ipcProperties.getPort()).sync();
   }
 
   @PreDestroy

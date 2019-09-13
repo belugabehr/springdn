@@ -16,7 +16,7 @@ import com.cloudera.datanode.domain.DataNodeDomain.BlockMetaData;
 import com.cloudera.datanode.domain.DataNodeDomain.ChecksumInfo;
 import com.google.common.primitives.Ints;
 
-import io.github.belugabehr.datanode.storage.BlockManager;
+import io.github.belugabehr.datanode.storage.block.BlockManager;
 import io.github.belugabehr.datanode.util.BlockPacketWriter;
 import io.github.belugabehr.datanode.util.ChunkedPacketStream;
 import io.github.belugabehr.datanode.util.ProtobufEncoder;

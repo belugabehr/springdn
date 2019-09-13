@@ -1,4 +1,4 @@
-package io.github.belugabehr.datanode.storage;
+package io.github.belugabehr.datanode.storage.block;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -11,7 +11,7 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 
-import io.github.belugabehr.datanode.storage.volume.Volume;
+import io.github.belugabehr.datanode.storage.Volume;
 
 @Component
 public class BlockPlacementPolicy {

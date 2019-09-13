@@ -10,7 +10,7 @@ import java.nio.channels.WritableByteChannel;
 
 import com.google.common.base.Preconditions;
 
-import io.github.belugabehr.datanode.storage.volume.Volume;
+import io.github.belugabehr.datanode.storage.Volume;
 
 public class WatchedFileChannel extends FileChannel {
 

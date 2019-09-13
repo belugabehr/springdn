@@ -36,10 +36,10 @@ public class BlockMetaDataService implements Closeable {
 
   private static final ReadOptions DEFAULT = new ReadOptions();
 
-  @Value("${dn.meta.dir:/var/lib/springdn}")
+  @Value("${datanode.meta.home:/var/lib/springdn}")
   private String dataDir;
 
-  @Value("${dn.meta.cache:33554432}")
+  @Value("${datanode.meta.cache:33554432}")
   private long cacheSize;
 
   private DB db;

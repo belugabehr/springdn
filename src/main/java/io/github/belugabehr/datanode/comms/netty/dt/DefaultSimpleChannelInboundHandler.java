@@ -2,7 +2,7 @@ package io.github.belugabehr.datanode.comms.netty.dt;
 
 import com.google.common.base.Preconditions;
 
-import io.github.belugabehr.datanode.storage.BlockManager;
+import io.github.belugabehr.datanode.storage.block.BlockManager;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.AttributeKey;

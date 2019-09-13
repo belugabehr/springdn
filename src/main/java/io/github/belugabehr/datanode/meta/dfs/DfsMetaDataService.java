@@ -23,6 +23,7 @@ import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -32,18 +33,20 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Timestamp;
 
+import io.github.belugabehr.datanode.DfsProperties;
+
 @Service
 public class DfsMetaDataService implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(DfsMetaDataService.class);
 
-  @Value("${dn.meta.dir:/var/lib/springdn}")
+  @Value("${datanode.meta.home:/var/lib/springdn}")
   private String dataDir;
 
-  @Value("${dn.namenode.servers}")
-  private List<String> namenodes;
+  @Autowired
+  private DfsProperties dfsProperties;
 
-  @Value("${dn.ipc.transfer.port:51515}")
+  @Value("${datanode.ipc.transfer.port:51515}")
   private int dataTransferPort;
 
   @Value("${server.port:8080}")
@@ -57,11 +60,11 @@ public class DfsMetaDataService implements Closeable {
 
   @PostConstruct
   public void init() throws Exception {
-    Preconditions.checkNotNull(namenodes);
-    Preconditions.checkState(!namenodes.isEmpty());
+    Preconditions.checkNotNull(dfsProperties.getServers());
+    Preconditions.checkState(!dfsProperties.getServers().isEmpty());
 
     final List<URI> nnul = new ArrayList<>();
-    for (final String nameNode : this.namenodes) {
+    for (final String nameNode : this.dfsProperties.getServers()) {
       nnul.add(new URI(nameNode));
     }
     this.namenodeURIs = nnul;

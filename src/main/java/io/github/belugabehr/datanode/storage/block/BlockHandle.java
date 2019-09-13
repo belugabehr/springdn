@@ -1,11 +1,11 @@
-package io.github.belugabehr.datanode.storage;
+package io.github.belugabehr.datanode.storage.block;
 
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 
 import com.cloudera.datanode.domain.DataNodeDomain.BlockIdentifier;
 
-import io.github.belugabehr.datanode.storage.volume.Volume;
+import io.github.belugabehr.datanode.storage.Volume;
 
 public class BlockHandle implements AutoCloseable {
 

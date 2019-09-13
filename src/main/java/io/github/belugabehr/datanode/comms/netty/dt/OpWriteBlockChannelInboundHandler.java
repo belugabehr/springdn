@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.cloudera.datanode.domain.DataNodeDomain;
 import com.cloudera.datanode.domain.DataNodeDomain.BlockIdentifier;
 
-import io.github.belugabehr.datanode.storage.BlockHandle;
+import io.github.belugabehr.datanode.storage.block.BlockHandle;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;

@@ -21,8 +21,8 @@ import io.github.belugabehr.datanode.blockpool.BlockPoolManager;
 import io.github.belugabehr.datanode.comms.nn.NameNodeConnectionPool;
 import io.github.belugabehr.datanode.events.InvalidateBlockListener;
 import io.github.belugabehr.datanode.has.Metrics;
-import io.github.belugabehr.datanode.storage.volume.Volume;
-import io.github.belugabehr.datanode.storage.volume.VolumeManager;
+import io.github.belugabehr.datanode.storage.StorageManager;
+import io.github.belugabehr.datanode.storage.Volume;
 import io.github.belugabehr.datanode.util.HadoopCompatible;
 import io.micrometer.core.instrument.MeterRegistry;
 
@@ -30,7 +30,7 @@ public class HeartbeatAction implements Runnable {
 
   private static Logger LOG = LoggerFactory.getLogger(HeartbeatAction.class);
 
-  private VolumeManager volumeManager;
+  private StorageManager volumeManager;
 
   private MeterRegistry meterRegistry;
 
@@ -44,7 +44,7 @@ public class HeartbeatAction implements Runnable {
 
   private String blockPoolID;
 
-  public HeartbeatAction(VolumeManager volumeManager, MeterRegistry meterRegistry,
+  public HeartbeatAction(StorageManager volumeManager, MeterRegistry meterRegistry,
       InvalidateBlockListener invalidateBlockListener, URI nameNodeURI, NameNodeConnectionPool connections,
       BlockPoolManager blockPoolManager, String blockPoolID) {
     this.volumeManager = volumeManager;

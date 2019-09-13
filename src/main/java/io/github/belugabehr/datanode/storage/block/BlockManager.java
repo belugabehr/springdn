@@ -1,4 +1,4 @@
-package io.github.belugabehr.datanode.storage;
+package io.github.belugabehr.datanode.storage.block;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

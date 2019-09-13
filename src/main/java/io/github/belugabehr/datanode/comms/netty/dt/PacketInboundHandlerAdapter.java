@@ -12,8 +12,8 @@ import com.cloudera.datanode.domain.DataNodeDomain.BlockIdentifier;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 
-import io.github.belugabehr.datanode.storage.BlockHandle;
-import io.github.belugabehr.datanode.storage.BlockManager;
+import io.github.belugabehr.datanode.storage.block.BlockHandle;
+import io.github.belugabehr.datanode.storage.block.BlockManager;
 import io.github.belugabehr.datanode.util.FixedLengthBlockCheckedOutputStream;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
