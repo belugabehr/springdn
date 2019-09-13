@@ -32,7 +32,7 @@ The Apache Hadoop DataNode, stores two types of data to the drives: block data, 
 mkdir -p /var/lib/springdn
 mkdir -p /data/d1
 
-# edit confg/application.properties
+# edit confg/application.yml
 
 cd <springdn_home>
 ./bin/springdn start
@@ -60,29 +60,56 @@ http://localhost:8080/actuator/metrics/{metric.name}
 ## Configuration
 
 ```
-# Comma-separated list of NameNodes
-# Must be proper URI with 'hdfs' scheme
-dn.namenode.servers=hdfs://127.0.0.1:8022
+datanode:
+  meta:
+    # Location for LevelDB databases and other metadata
+    home: "/var/lib/springdn"
 
-# Location to store data blocks.
-# Any sub-directories will be automatically initialized by the SpringDN
-dn.data.blocks.dir=/data
+    # LevelDB read cache size in bytes
+    cache: 33554432
+  ipc:
+    transfer:
+      # Port for opening a HDFS transfer protocol socket
+      port: 51515
+  storage:
+    # Specify the storage groups
+    # The single 'default' group is appropriate for setups which only use
+    # HDDs. For mixed environments, add additional storage groups
+    groups:
+      default:
+        description: "Default location for blocks"
 
-# Location for LevelDB databases and other metadata
-dn.meta.dir=/var/lib/springdn
-
-# The HDFS Data Transfer Protocol port
-dn.ipc.transfer.port=51515
+        # 'directory' is a top-level directory where blocks will be stored for this
+        # storage group. All volumes allocated to this storage group should be mounted
+        # as a sub-directory. This directory must exist be writeable by SpringDN.
+        directory: "/data"
+  dfs:
+    # List of HDFS NameNodes
+    # Must be proper URI with 'hdfs' scheme
+    servers:
+      - "hdfs://127.0.0.1:8022"
 
 # The Web UI port used for health and status
-server.port=8080
+server:
+  port: 8080
+  tomcat:
+    min-spare-threads: 1
+
+# Configuration for health and status
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "info,health,metrics,threaddump,configprops"
 ```
 
 ## SpringDN Design
 
 ### HDFS Write Path
 
-When the client writes a block to the Spring DataNode, it is not required that it provide the specific storage volume ID for each write.  The DataNode can dynamically choose the drive to store data. The exact location of each block is recorded in LevelDB thus removing the burden of maintaining a mapping of blocks to their storage volume from the NameNode.  This could be modified within the client to pass an optional hint as to the type of drive preferred for each write.  This would support clusters where drives are mixed (HHDs/SSDs) granted mixed drive profiles are not a common configuration.
+When the client sends a write block request to a DataNode, it includes with it a Storage ID. Traditionally, a Storage ID specifies which drive the block should be written to on the DataNode. However, SpringDN treats this Storage ID as representing a group of drives, not a specific drive. In affect, SpringDN implements a software-level RAID 0. This allows SpringDN to support an environment where drives are deployed in a heterogeneous manner. The specific location, the specific destination drive, is hidden from the NameNode and other clients. This allows the DataNode to dynamically choose the drive on which to store the block.
+
+The exact location of each block is recorded in LevelDB thus removing the burden of maintaining a mapping of blocks to a specific drive from the NameNode.  This allows the DataNode flexibility in choosing the optimal drive to store the data and also allows the DataNode to shuffle data when, for example, a new drive is added to the node. The DataNode can automatically re-balance the blocks without updating the NameNode.
 
 The key to the LevelDB is the tuple (Block Pool ID, Block ID, Generation Stamp).  Stored within each record is the location of the block, creation time, the size of the block, and checksum information.
 
@@ -102,7 +129,7 @@ In order to decrease usage, to support ever larger arrays of hard drives, Spring
 
 ### HDFS Read Path
 
-When an HDFS read request is transmitted to SpringDN, it uses the tuple (Block Pool ID, Block ID, Generation Stamp) to load the storage location and checksum information of the block.  This information is used to locate and validate the block.
+When an HDFS read request is transmitted to SpringDN, it uses the tuple (Block Pool ID, Block ID, Generation Stamp) to load the storage location and checksum information of the block.  This information is used to locate and validate the block. It is important to note that the Storage ID need not be included (it is ignored by SpringDN) since the location of the block can be determined from only its unique tuple.
 
 ![SpringDN Read Path](resources/images/springdn_read_path.png)
 
