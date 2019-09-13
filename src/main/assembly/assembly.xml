@@ -33,7 +33,7 @@
 			<directory>src/main/config</directory>
 			<outputDirectory>config</outputDirectory>
 			<includes>
-				<include>*.properties</include>
+				<include>*.yml</include>
 			</includes>
 		</fileSet>
 	</fileSets>
