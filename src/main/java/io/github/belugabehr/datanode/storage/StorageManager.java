@@ -107,4 +107,9 @@ public class StorageManager {
     return Collections.unmodifiableCollection(this.volumeGroups.values());
   }
 
+  public Collection<Volume> getAllVolumes() {
+    return this.volumeGroups.values().stream().map(volumeGroup -> volumeGroup.getVolumes())
+        .flatMap(entry -> entry.values().stream()).filter(volume -> !volume.isFailed()).collect(Collectors.toList());
+  }
+
 }

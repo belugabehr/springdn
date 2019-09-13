@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import javax.annotation.PostConstruct;
@@ -114,17 +115,17 @@ public class DfsMetaDataService implements Closeable {
     }
   }
 
-  public BlockPoolInfo getBlockPoolInfo(final String blockPoolId) {
+  public Optional<BlockPoolInfo> getBlockPoolInfo(final String blockPoolId) {
     final byte[] key = ("bp:" + blockPoolId).getBytes();
     final byte[] value = this.db.get(key);
-    if (value == null) {
-      return null;
-    }
+    if (value != null) {
     try {
-      return BlockPoolInfo.parseFrom(value);
+      return Optional.of(BlockPoolInfo.parseFrom(value));
     } catch (InvalidProtocolBufferException e) {
-      return null;
+      LOG.warn("Unable to parse BlockPoolInfo object");
     }
+    }
+    return Optional.empty();
   }
 
   public void addBlockPoolInfo(final BlockPoolInfo newBlockPoolInfo) {

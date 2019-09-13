@@ -2,7 +2,6 @@ package io.github.belugabehr.datanode.blockpool;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -10,6 +9,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.hadoop.hdfs.server.protocol.DatanodeRegistration;
+import org.apache.hadoop.hdfs.server.protocol.NamespaceInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,8 +20,6 @@ import com.google.common.collect.Multimap;
 import io.github.belugabehr.datanode.meta.dfs.DfsMetaDataService;
 import io.github.belugabehr.datanode.storage.StorageManager;
 import io.github.belugabehr.datanode.storage.Volume;
-import io.github.belugabehr.datanode.storage.VolumeGroup;
-import io.github.belugabehr.datanode.util.SpreadDirectory;
 
 @Service
 public class BlockPoolManager {
@@ -32,37 +30,30 @@ public class BlockPoolManager {
   @Autowired
   private StorageManager volumeManager;
 
+  @Autowired
+  private BlockPoolInitializer blockPoolInitializer;
+
   private final Map<String, DatanodeRegistration> registrations = new ConcurrentHashMap<>();
 
   private final Multimap<String, URI> blockPoolNameNodeMap = ArrayListMultimap.create();
 
-  public Optional<BlockPoolInfo> getBlockPoolInfo(final String blockPoolId) {
-    final BlockPoolInfo bpi = this.dfsMetaDataService.getBlockPoolInfo(blockPoolId);
-    return Optional.ofNullable(bpi);
-  }
+  public BlockPoolInfo register(final NamespaceInfo namespace) throws IOException {
+    final Optional<BlockPoolInfo> bpInfo = this.dfsMetaDataService.getBlockPoolInfo(namespace.getBlockPoolID());
 
-  public void initialize(final String blockPoolId) {
-    // TODO: Turn this into its own BlockPoolInitializer bean
-    final Collection<VolumeGroup> volumeGroups = this.volumeManager.getVolumeGroups();
-    for (final VolumeGroup volumeGroup : volumeGroups) {
-      for (final Volume volume : volumeGroup.getVolumes().values()) {
-        final Path volumeRoot = volume.getPath();
-        final Path blockPoolRoot = volumeRoot.resolve(blockPoolId);
-
-        final SpreadDirectory spreadDirectory =
-            SpreadDirectory.newBuilder().rootPath(blockPoolRoot).levelOne(16).levelTwo(256).build();
-
-        try {
-          spreadDirectory.spread();
-        } catch (IOException ioe) {
-          volume.reportError(ioe);
-        }
-      }
+    if (bpInfo.isPresent()) {
+      return bpInfo.get();
     }
-  }
 
-  public void addBlockPoolInfo(BlockPoolInfo newBlockPoolInfo) {
+    final Collection<Volume> volumes = volumeManager.getAllVolumes();
+    this.blockPoolInitializer.init(namespace.getBlockPoolID(), volumes);
+
+    final BlockPoolInfo newBlockPoolInfo = BlockPoolInfo.newBuilder().setClusterID(namespace.getClusterID())
+        .setNamespaceID(namespace.getNamespaceID()).setBlockPoolID(namespace.getBlockPoolID())
+        .setLayoutVersion(namespace.getLayoutVersion()).setCTime(namespace.getCTime()).build();
+
     this.dfsMetaDataService.addBlockPoolInfo(newBlockPoolInfo);
+
+    return newBlockPoolInfo;
   }
 
   public void associate(String blockPoolId, DatanodeRegistration registration) {

@@ -3,7 +3,6 @@ package io.github.belugabehr.datanode.registration;
 import java.net.InetAddress;
 import java.net.URI;
 import java.util.Collection;
-import java.util.Optional;
 
 import org.apache.hadoop.hdfs.protocol.DatanodeID;
 import org.apache.hadoop.hdfs.protocolPB.DatanodeProtocolClientSideTranslatorPB;
@@ -38,7 +37,7 @@ public class RegistrationService {
 
   @Autowired
   private BlockPoolManager blockPoolManager;
-  
+
   @Autowired
   private HeartbeatService heartbeatService;
 
@@ -50,36 +49,19 @@ public class RegistrationService {
       DatanodeProtocolClientSideTranslatorPB comms = this.connections.borrowObject(namenodeURI);
       try {
         final NamespaceInfo namespace = comms.versionRequest();
-        final String clusterID = namespace.getClusterID();
-        final int namespaceID = namespace.getNamespaceID();
-        final int layoutVersion = namespace.getLayoutVersion();
-        final long cTime = namespace.getCTime();
         final String blockPoolId = namespace.getBlockPoolID();
-//        namespace.getBuildVersion();
-//        namespace.getSoftwareVersion();
 
-        final Optional<BlockPoolInfo> bpInfoOpt = this.blockPoolManager.getBlockPoolInfo(blockPoolId);
-        final BlockPoolInfo bpInfo;
-        if (bpInfoOpt.isPresent()) {
-          bpInfo = bpInfoOpt.get();
-        } else {
-          this.blockPoolManager.initialize(blockPoolId);
-          final BlockPoolInfo newBlockPoolInfo =
-              BlockPoolInfo.newBuilder().setBlockPoolID(blockPoolId).setClusterID(clusterID).setNamespaceID(namespaceID)
-                  .setLayoutVersion(layoutVersion).setCTime(cTime).build();
-          this.blockPoolManager.addBlockPoolInfo(newBlockPoolInfo);
-          bpInfo = newBlockPoolInfo;
-        }
-        
-//        checkNSEquality(bpNSInfo.getBlockPoolID(), nsInfo.getBlockPoolID(),
-//            "Blockpool ID");
-//        checkNSEquality(bpNSInfo.getNamespaceID(), nsInfo.getNamespaceID(),
-//            "Namespace ID");
-//        checkNSEquality(bpNSInfo.getClusterID(), nsInfo.getClusterID(),
-//            "Cluster ID");
+        final BlockPoolInfo blockPoolInfo = this.blockPoolManager.register(namespace);
 
-        final StorageInfo storageInfo = new StorageInfo(bpInfo.getLayoutVersion(), bpInfo.getNamespaceID(),
-            bpInfo.getClusterID(), bpInfo.getCTime(), NodeType.DATA_NODE);
+        // checkNSEquality(bpNSInfo.getBlockPoolID(), nsInfo.getBlockPoolID(),
+        // "Blockpool ID");
+        // checkNSEquality(bpNSInfo.getNamespaceID(), nsInfo.getNamespaceID(),
+        // "Namespace ID");
+        // checkNSEquality(bpNSInfo.getClusterID(), nsInfo.getClusterID(),
+        // "Cluster ID");
+
+        final StorageInfo storageInfo = new StorageInfo(blockPoolInfo.getLayoutVersion(),
+            blockPoolInfo.getNamespaceID(), blockPoolInfo.getClusterID(), blockPoolInfo.getCTime(), NodeType.DATA_NODE);
 
         final InetAddress localhost = this.dfsMetaDataService.getInetAddress();
         final DatanodeID dnid =
