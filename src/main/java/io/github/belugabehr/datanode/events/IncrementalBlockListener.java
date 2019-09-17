@@ -29,11 +29,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
-import com.cloudera.datanode.domain.DataNodeDomain.BlockIdentifier;
-import com.cloudera.datanode.domain.DataNodeDomain.StorageInfo;
 
 import io.github.belugabehr.datanode.blockpool.BlockPoolManager;
 import io.github.belugabehr.datanode.comms.nn.NameNodeConnectionPool;
+import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockIdentifier;
+import io.github.belugabehr.datanode.domain.DataNodeDomain.StorageInfo;
 import io.github.belugabehr.datanode.util.Batch;
 import io.github.belugabehr.datanode.util.HadoopCompatible;
 import reactor.core.publisher.Flux;

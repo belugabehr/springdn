@@ -8,10 +8,10 @@ import org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cloudera.datanode.domain.DataNodeDomain.BlockIdentifier;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 
+import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockIdentifier;
 import io.github.belugabehr.datanode.storage.block.BlockHandle;
 import io.github.belugabehr.datanode.storage.block.BlockManager;
 import io.github.belugabehr.datanode.util.FixedLengthBlockCheckedOutputStream;

@@ -9,9 +9,8 @@ import org.apache.hadoop.hdfs.protocol.proto.HdfsProtos.ExtendedBlockProto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cloudera.datanode.domain.DataNodeDomain;
-import com.cloudera.datanode.domain.DataNodeDomain.BlockIdentifier;
-
+import io.github.belugabehr.datanode.domain.DataNodeDomain;
+import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockIdentifier;
 import io.github.belugabehr.datanode.storage.block.BlockHandle;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;

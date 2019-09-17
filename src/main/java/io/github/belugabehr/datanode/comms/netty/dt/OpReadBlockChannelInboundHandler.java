@@ -12,10 +12,10 @@ import org.apache.hadoop.hdfs.protocol.proto.HdfsProtos.ChecksumTypeProto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cloudera.datanode.domain.DataNodeDomain.BlockMetaData;
-import com.cloudera.datanode.domain.DataNodeDomain.ChecksumInfo;
 import com.google.common.primitives.Ints;
 
+import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockMetaData;
+import io.github.belugabehr.datanode.domain.DataNodeDomain.ChecksumInfo;
 import io.github.belugabehr.datanode.storage.block.BlockManager;
 import io.github.belugabehr.datanode.util.BlockPacketWriter;
 import io.github.belugabehr.datanode.util.ChunkedPacketStream;

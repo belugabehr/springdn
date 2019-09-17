@@ -17,12 +17,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.cloudera.datanode.domain.DataNodeDomain.BlockPoolInfo;
-import com.cloudera.datanode.domain.DataNodeDomain.DataNodeInfo;
-
 import io.github.belugabehr.datanode.blockpool.BlockPoolManager;
 import io.github.belugabehr.datanode.comms.nn.NameNodeConnectionPool;
 import io.github.belugabehr.datanode.comms.nn.hb.HeartbeatService;
+import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockPoolInfo;
+import io.github.belugabehr.datanode.domain.DataNodeDomain.DataNodeInfo;
 import io.github.belugabehr.datanode.meta.dfs.DfsMetaDataService;
 
 @Service

@@ -28,13 +28,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.cloudera.datanode.domain.DataNodeDomain.BlockPoolInfo;
-import com.cloudera.datanode.domain.DataNodeDomain.DataNodeInfo;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Timestamp;
 
 import io.github.belugabehr.datanode.DfsProperties;
+import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockPoolInfo;
+import io.github.belugabehr.datanode.domain.DataNodeDomain.DataNodeInfo;
 
 @Service
 public class DfsMetaDataService implements Closeable {

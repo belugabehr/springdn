@@ -7,7 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 
 import com.google.common.base.Preconditions;
 
@@ -18,7 +18,7 @@ public class DefaultVolume implements Volume {
   private final Path dataPath;
   private final Path tmpDir;
   private final FileStore fileStore;
-  private final AtomicInteger ioErrorCount;
+  private final LongAdder ioErrorCount;
 
   private UUID id;
 
@@ -27,7 +27,7 @@ public class DefaultVolume implements Volume {
     this.dataPath = dataPath;
     this.tmpDir = this.dataPath.resolve(TMP_DIR);
     this.fileStore = determineFileStore(dataPath);
-    this.ioErrorCount = new AtomicInteger();
+    this.ioErrorCount = new LongAdder();
 
     Preconditions.checkState(Files.isDirectory(this.tmpDir));
   }
@@ -38,8 +38,7 @@ public class DefaultVolume implements Volume {
    */
   private FileStore determineFileStore(final Path path) {
     final Path absPath = path.toAbsolutePath();
-    final Iterable<FileStore> it = FileSystems.getDefault().getFileStores();
-    for (final FileStore fs : it) {
+    for (final FileStore fs : FileSystems.getDefault().getFileStores()) {
       final String[] elems = fs.toString().split(" ");
       if (elems.length > 0) {
         final Path mountPath = Paths.get(elems[0]);
@@ -85,17 +84,17 @@ public class DefaultVolume implements Volume {
 
   @Override
   public void reportError(final IOException ioe) {
-    this.ioErrorCount.incrementAndGet();
+    this.ioErrorCount.increment();
   }
 
   @Override
   public Number getErrors() {
-    return Integer.valueOf(this.ioErrorCount.get());
+    return Long.valueOf(this.ioErrorCount.sum());
   }
 
   @Override
   public boolean isFailed() {
-    return this.ioErrorCount.get() > 0;
+    return this.ioErrorCount.sum() > 0L;
   }
 
   @Override

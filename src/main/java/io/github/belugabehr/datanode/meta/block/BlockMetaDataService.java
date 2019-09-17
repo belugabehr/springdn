@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -20,12 +21,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.cloudera.datanode.domain.DataNodeDomain.BlockIdentifier;
-import com.cloudera.datanode.domain.DataNodeDomain.BlockMetaData;
-import com.cloudera.datanode.domain.DataNodeDomain.ChecksumInfo;
 import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
 import com.google.protobuf.InvalidProtocolBufferException;
+
+import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockIdentifier;
+import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockMetaData;
+import io.github.belugabehr.datanode.domain.DataNodeDomain.ChecksumInfo;
 
 @Service
 public class BlockMetaDataService implements Closeable {
@@ -61,7 +62,7 @@ public class BlockMetaDataService implements Closeable {
   }
 
   public void deletedBlock(final BlockIdentifier blockId) throws IOException {
-    Preconditions.checkNotNull(blockId);
+    Objects.requireNonNull(blockId);
 
     final byte[] blockIdBytes = blockId.toByteArray();
 
@@ -74,8 +75,8 @@ public class BlockMetaDataService implements Closeable {
   }
 
   public void addBlock(final BlockMetaData blockMetaData, final ChecksumInfo checksumInfo) {
-    Preconditions.checkNotNull(blockMetaData);
-    Preconditions.checkNotNull(checksumInfo);
+    Objects.requireNonNull(blockMetaData);
+    Objects.requireNonNull(checksumInfo);
 
     LOG.debug("Adding metadata for block: [{}]", blockMetaData);
 
@@ -92,17 +93,24 @@ public class BlockMetaDataService implements Closeable {
   }
 
   public Optional<BlockMetaData> getBlockMetaData(final BlockIdentifier blockId) throws IOException {
-    Preconditions.checkNotNull(blockId);
+    return getBlockMetaData(blockId, false);
+  }
+
+  public Optional<BlockMetaData> getBlockMetaData(final BlockIdentifier blockId, final boolean skipCache)
+      throws IOException {
+    Objects.requireNonNull(blockId);
 
     final byte[] blockIdBytes = blockId.toByteArray();
     final byte[] metaKey = BlockMetaKeys.BLOCK_META.getKeyValue(blockIdBytes);
 
-    final byte[] result = this.db.get(metaKey);
+    final ReadOptions readOptions = (skipCache) ? SKIP_CACHE : DEFAULT;
+
+    final byte[] result = this.db.get(metaKey, readOptions);
 
     return result == null ? Optional.absent() : Optional.of(BlockMetaData.parseFrom(result));
   }
 
-  public BlockMetaIterator getBlockMetaData() throws IOException {
+  public BlockMetaIterator getBlockMetaData() {
     return new BlockMetaIterator(this.db.iterator(SKIP_CACHE));
   }
 
@@ -119,4 +127,18 @@ public class BlockMetaDataService implements Closeable {
       return null;
     }
   }
+
+  public void updateBlock(final BlockMetaData blockMetaData) {
+    Objects.requireNonNull(blockMetaData);
+
+    LOG.debug("Updating metadata for block: [{}]", blockMetaData);
+
+    final byte[] blockIdBytes = blockMetaData.getBlockId().toByteArray();
+
+    final byte[] metaKey = BlockMetaKeys.BLOCK_META.getKeyValue(blockIdBytes);
+    final byte[] metaValue = blockMetaData.toByteArray();
+
+    this.db.put(metaKey, metaValue);
+  }
+
 }

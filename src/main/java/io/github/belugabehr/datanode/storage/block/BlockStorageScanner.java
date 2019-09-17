@@ -15,12 +15,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.cloudera.datanode.domain.DataNodeDomain.BlockIdentifier;
-import com.cloudera.datanode.domain.DataNodeDomain.BlockMetaData;
-import com.cloudera.datanode.domain.DataNodeDomain.ChecksumInfo;
-import com.google.common.io.LimitInputStream;
+import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockIdentifier;
+import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockMetaData;
+import io.github.belugabehr.datanode.domain.DataNodeDomain.ChecksumInfo;
 import io.github.belugabehr.datanode.meta.block.BlockMetaDataService;
 import io.github.belugabehr.datanode.meta.block.BlockMetaIterator;
 import io.github.belugabehr.datanode.util.FixedLengthBlockCheckedOutputStream;
@@ -89,7 +89,7 @@ public class BlockStorageScanner implements Runnable, Closeable {
 
     try (final FileChannel channel = this.storageService.openBlock(blockID, bm.getStorageInfo().getVolumeId())) {
 
-      final InputStream is = new LimitInputStream(Channels.newInputStream(channel), bm.getStorageInfo().getBlockSize());
+      final InputStream is = ByteStreams.limit(Channels.newInputStream(channel), bm.getStorageInfo().getBlockSize());
 
       is.transferTo(os);
 

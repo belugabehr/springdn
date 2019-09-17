@@ -6,17 +6,21 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.curator.shaded.com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import com.google.common.base.Optional;
@@ -27,12 +31,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 
 @Service
-public class StorageManager {
+public class StorageManager implements VolumeGroupChangeListener {
 
   private static final Logger LOG = LoggerFactory.getLogger(StorageManager.class);
-
-  @Autowired
-  private VolumeWatcher volumeWatcher;
 
   @Autowired
   private MeterRegistry meterRegisty;
@@ -46,47 +47,69 @@ public class StorageManager {
   @Autowired
   private VolumeInitializer volumeInitializer;
 
+  @Autowired
+  @Qualifier("globalScheduledTaskExecutor")
+  private ScheduledExecutorService scheduler;
+
   private final Map<UUID, VolumeGroup> volumeGroups = Maps.newHashMap();
 
   private final Map<UUID, Volume> volumes = Maps.newHashMap();
 
+  private final List<VolumeGroupWatcher> watchers = Lists.newArrayList();
+
   @PostConstruct
   public void init() throws IOException {
     for (final Entry<String, VolumeGroupProperties> entry : this.storageProperties.getGroups().entrySet()) {
-      LOG.info("Processing storage: {} [{}]", entry.getKey(), entry.getValue().getDescription());
+      LOG.info("Initialize storage: {} [{}]", entry.getKey(), entry.getValue().getDescription());
 
-      final String pathStr = entry.getValue().getDirectory();
-      final Path storageDirectory = Paths.get(pathStr);
-
-      final Map<UUID, Volume> volumeMap = Maps.newHashMap();
-
-      final UUID volumeGroupId = this.volumeGroupInitializer.init(storageDirectory);
+      final VolumeGroup volumeGroup = this.addVolumeGroup(entry.getKey(), entry.getValue());
+      final Path storageDirectory = Paths.get(entry.getValue().getDirectory());
 
       final Collection<Path> availableVolumes = doDiscoverVolumes(storageDirectory);
       availableVolumes.forEach(v -> {
         try {
-          final UUID volumeId = this.volumeInitializer.init(v);
-          final Volume volume = new DefaultVolume(volumeId, v);
-          volumeMap.put(volumeId, volume);
+          addVolume(volumeGroup, v);
         } catch (IOException ioe) {
           LOG.error("Could not initialize and register a volume [{}]. Skipped.", v, ioe);
         }
       });
 
-      this.volumes.putAll(volumeMap);
-
-      final VolumeGroup volumeGroup = new VolumeGroup();
-      volumeGroup.setId(volumeGroupId);
-      volumeGroup.setName(entry.getKey());
-      volumeGroup.setDescription(entry.getValue().getDescription());
-      volumeGroup.setVolumes(volumeMap);
-
-      this.volumeGroups.put(volumeGroupId, volumeGroup);
-
-      this.volumeWatcher.watch(storageDirectory);
+      watchers.add(new VolumeGroupWatcher(volumeGroup, scheduler, this).watch());
     }
 
-    this.meterRegisty.gaugeCollectionSize("datanode.fs.vol.group.count", Tags.empty(), this.volumeGroups.keySet());
+    this.meterRegisty.gaugeCollectionSize("datanode.storage.groups.count", Tags.empty(), this.volumeGroups.keySet());
+    this.meterRegisty.gaugeCollectionSize("datanode.storage.volumes.count", Tags.empty(), this.volumes.keySet());
+  }
+
+  public VolumeGroup addVolumeGroup(final String volumeGroupName, final VolumeGroupProperties properties)
+      throws IOException {
+    final Path mountDirectory = Paths.get(properties.getDirectory());
+    final UUID volumeGroupId = this.volumeGroupInitializer.init(mountDirectory);
+
+    final VolumeGroup volumeGroup = new VolumeGroup();
+    volumeGroup.setId(volumeGroupId);
+    volumeGroup.setName(volumeGroupName);
+    volumeGroup.setDescription(properties.getDescription());
+    volumeGroup.setMountDirectory(mountDirectory);
+
+    this.volumeGroups.put(volumeGroupId, volumeGroup);
+
+    return volumeGroup;
+  }
+
+  public Volume addVolume(final VolumeGroup volumeGroup, final Path volumePath) throws IOException {
+    final UUID volumeId = this.volumeInitializer.init(volumePath);
+    final Volume volume = new DefaultVolume(volumeId, volumePath);
+
+    volumeGroup.getVolumes().put(volumeId, volume);
+    this.volumes.put(volumeId, volume);
+
+    return volume;
+  }
+
+  @Override
+  public void volumeAdded(final VolumeGroup volumeGroup, final Path child) throws IOException {
+    addVolume(volumeGroup, child);
   }
 
   public Volume getNextAvailableVolume(final UUID volumeGroupId, final long requestedBlockSize) {

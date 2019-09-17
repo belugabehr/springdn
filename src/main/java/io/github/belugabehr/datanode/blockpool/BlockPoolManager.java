@@ -13,10 +13,10 @@ import org.apache.hadoop.hdfs.server.protocol.NamespaceInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.cloudera.datanode.domain.DataNodeDomain.BlockPoolInfo;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
+import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockPoolInfo;
 import io.github.belugabehr.datanode.meta.dfs.DfsMetaDataService;
 import io.github.belugabehr.datanode.storage.StorageManager;
 import io.github.belugabehr.datanode.storage.Volume;

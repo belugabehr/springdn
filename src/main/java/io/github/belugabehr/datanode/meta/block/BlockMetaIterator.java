@@ -5,9 +5,10 @@ import java.util.Map.Entry;
 
 import org.iq80.leveldb.DBIterator;
 
-import com.cloudera.datanode.domain.DataNodeDomain.BlockMetaData;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.InvalidProtocolBufferException;
+
+import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockMetaData;
 
 public class BlockMetaIterator implements Iterator<BlockMetaData>, AutoCloseable {
 

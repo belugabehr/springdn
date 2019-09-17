@@ -4,7 +4,7 @@ package datanode;
 
 import "google/protobuf/timestamp.proto";
 
-option java_package = "com.cloudera.datanode.domain";
+option java_package = "io.github.belugabehr.datanode.domain";
 option java_outer_classname = "DataNodeDomain";
 
 message BlockIdentifier {

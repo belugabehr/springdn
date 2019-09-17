@@ -15,9 +15,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.cloudera.datanode.domain.DataNodeDomain.BlockIdentifier;
 import com.google.common.base.Optional;
 
+import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockIdentifier;
+import io.github.belugabehr.datanode.domain.DataNodeDomain.StorageInfo;
 import io.github.belugabehr.datanode.storage.StorageManager;
 import io.github.belugabehr.datanode.storage.Volume;
 import io.github.belugabehr.datanode.util.WatchedFileChannel;
@@ -37,7 +38,8 @@ public class BlockStorageService {
   @Autowired
   private BlockPlacementPolicy placementPolicy;
 
-  public BlockHandle initializeBlock(final UUID volumeGroupId, final BlockIdentifier blockID, final long blockSize) throws Exception {
+  public BlockHandle initializeBlock(final UUID volumeGroupId, final BlockIdentifier blockId, final long blockSize)
+      throws Exception {
     final Volume volume = this.volumeManager.getNextAvailableVolume(volumeGroupId, blockSize);
 
     final Path blockTmpFilePath = volume.getTempFile();
@@ -46,7 +48,7 @@ public class BlockStorageService {
     final RandomAccessFile rf = new RandomAccessFile(blockTmpFilePath.toFile(), "rw");
     final FileChannel channel = WatchedFileChannel.watch(volume, rf.getChannel());
 
-    return new BlockHandle(blockID, volume, channel, blockTmpFilePath);
+    return new BlockHandle(blockId, volume, channel, blockTmpFilePath);
   }
 
   /**
@@ -59,10 +61,10 @@ public class BlockStorageService {
     handle.getFileChannel().position(offset).write(data);
   }
 
-  public FileChannel openBlock(final BlockIdentifier blockID, final String volumeUUID) throws IOException {
+  public FileChannel openBlock(final BlockIdentifier blockId, final String volumeUUID) throws IOException {
     final Optional<Volume> volume = this.volumeManager.getVolume(UUID.fromString(volumeUUID));
     if (volume.isPresent()) {
-      final Path finalBlockPath = this.placementPolicy.generateBlockPath(volume.get(), blockID);
+      final Path finalBlockPath = this.placementPolicy.generateBlockPath(volume.get(), blockId);
       try {
         @SuppressWarnings("resource")
         final RandomAccessFile rf = new RandomAccessFile(finalBlockPath.toFile(), "rw");
@@ -80,9 +82,9 @@ public class BlockStorageService {
       channel.truncate(bytesWritten);
     }
 
-    final BlockIdentifier blockID = handle.getBlockID();
+    final BlockIdentifier blockId = handle.getBlockId();
     final Path tmpBlockPath = handle.getPath();
-    final Path finalBlockPath = this.placementPolicy.generateBlockPath(handle.getVolume(), blockID);
+    final Path finalBlockPath = this.placementPolicy.generateBlockPath(handle.getVolume(), blockId);
 
     LOG.debug("Moving tmp block file [{}] to final destination [{}]", tmpBlockPath, finalBlockPath);
 
@@ -94,9 +96,19 @@ public class BlockStorageService {
     }
   }
 
-  public void deleteBlock(final BlockIdentifier blockID, final String volumeUUID) throws IOException {
-    LOG.info("Delete from volume [{}]: block {}", volumeUUID, blockID);
-    final Optional<Volume> volume = this.volumeManager.getVolume(UUID.fromString(volumeUUID));
+  public void finalizeBlock(final BlockIdentifier blockId, final Path tmpPath, final Volume volume) throws IOException {
+    final Path finalBlockPath = this.placementPolicy.generateBlockPath(volume, blockId);
+    try {
+      Files.move(tmpPath, finalBlockPath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+    } catch (IOException ioe) {
+      // cpyFile.getKey().reportError(ioe);
+      throw ioe;
+    }
+  }
+
+  public void deleteBlock(final BlockIdentifier blockID, final String volumeId) throws IOException {
+    LOG.info("Delete from volume [{}]: block {}", volumeId, blockID);
+    final Optional<Volume> volume = this.volumeManager.getVolume(UUID.fromString(volumeId));
     if (volume.isPresent()) {
       final Path finalBlockPath = this.placementPolicy.generateBlockPath(volume.get(), blockID);
       try {
@@ -108,5 +120,25 @@ public class BlockStorageService {
         throw ioe;
       }
     }
+  }
+
+  public Path copyBlock(final BlockIdentifier blockId, final StorageInfo storageInfo, final Volume dstVolume)
+      throws IOException {
+
+    final UUID volumeId = UUID.fromString(storageInfo.getVolumeId());
+
+    final Optional<Volume> srcVolume = this.volumeManager.getVolume(volumeId);
+
+    if (srcVolume.isPresent()) {
+      final Path currentBlockPath = this.placementPolicy.generateBlockPath(srcVolume.get(), blockId);
+
+      final Path blockTmpFilePath = dstVolume.getTempFile();
+
+      Files.copy(currentBlockPath, blockTmpFilePath);
+
+      return blockTmpFilePath;
+    }
+
+    return null;
   }
 }

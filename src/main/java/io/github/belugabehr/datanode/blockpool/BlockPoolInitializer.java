@@ -26,10 +26,7 @@ public class BlockPoolInitializer {
       LOG.debug("Initializing block pool [{}] on volume [{}]", blockPoolId, volumeRoot);
 
       try {
-        final SpreadDirectory spreadDirectory =
-            SpreadDirectory.newBuilder().rootPath(blockPoolRoot).levelOne(16).levelTwo(256).build();
-
-        spreadDirectory.spread();
+        SpreadDirectory.newBuilder().rootPath(blockPoolRoot).levelOne(16).levelTwo(256).build().spread();
       } catch (IOException ioe) {
         volume.reportError(ioe);
       }

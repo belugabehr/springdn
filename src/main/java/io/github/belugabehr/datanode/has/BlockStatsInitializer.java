@@ -3,8 +3,7 @@ package io.github.belugabehr.datanode.has;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.cloudera.datanode.domain.DataNodeDomain.BlockMetaData;
-
+import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockMetaData;
 import io.github.belugabehr.datanode.meta.block.BlockMetaDataService;
 import io.github.belugabehr.datanode.meta.block.BlockMetaIterator;
 

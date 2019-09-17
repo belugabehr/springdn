@@ -23,15 +23,15 @@ public class VolumeGroupInitializer {
 
   private static final Path ID_FILE = Path.of("volumegroup.id");
 
-  public UUID init(final Path storageDirectory) throws IOException {
-    Preconditions.checkArgument(Files.isDirectory(storageDirectory), "All configured storage directories must exist");
+  public UUID init(final Path mountDirectory) throws IOException {
+    Preconditions.checkArgument(Files.isDirectory(mountDirectory), "All configured storage directories must exist");
 
-    final Path idFile = storageDirectory.resolve(ID_FILE);
+    final Path idFile = mountDirectory.resolve(ID_FILE);
     final Optional<UUID> volumeGroupId = extractId(idFile);
     if (volumeGroupId.isPresent()) {
       return volumeGroupId.get();
     }
-    return doInitialize(idFile, storageDirectory);
+    return doInitialize(idFile);
   }
 
   private Optional<UUID> extractId(final Path idFile) throws IOException {
@@ -52,7 +52,7 @@ public class VolumeGroupInitializer {
     }
   }
 
-  private UUID doInitialize(final Path idFile, final Path storageDirectory) throws IOException {
+  private UUID doInitialize(final Path idFile) throws IOException {
     final UUID volumeGroupId = UUID.randomUUID();
 
     LOG.info("Writing volume group UUID [{}][{}]", volumeGroupId, idFile);

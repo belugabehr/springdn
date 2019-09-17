@@ -1,5 +1,6 @@
 package io.github.belugabehr.datanode.storage;
 
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.UUID;
 
@@ -10,7 +11,8 @@ public class VolumeGroup {
   private UUID id;
   private String name;
   private String description;
-  private Map<UUID, Volume> volumes = Maps.newHashMap();
+  private Path mountDirectory;
+  private Map<UUID, Volume> volumes = Maps.newConcurrentMap();
 
   public UUID getId() {
     return id;
@@ -44,9 +46,19 @@ public class VolumeGroup {
     this.volumes = volumes;
   }
 
+  public void setMountDirectory(Path mountDirectory) {
+    this.mountDirectory = mountDirectory;
+  }
+  
+  public Path getMountDirectory() {
+    return this.mountDirectory;
+    
+  }
+
   @Override
   public String toString() {
-    return "VolumeGroup [id=" + id + ", name=" + name + ", description=" + description + ", volumes=" + volumes + "]";
+    return "VolumeGroup [id=" + id + ", name=" + name + ", description=" + description + ", mountDirectory="
+        + mountDirectory + ", volumes=" + volumes + "]";
   }
 
   public long getTotalSpace() {
@@ -81,6 +93,28 @@ public class VolumeGroup {
         return false;
       }
     }
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return (id == null) ? 0 : id.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    VolumeGroup other = (VolumeGroup) obj;
+    if (id == null) {
+      if (other.id != null)
+        return false;
+    } else if (!id.equals(other.id))
+      return false;
     return true;
   }
 

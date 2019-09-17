@@ -78,12 +78,12 @@ public class VolumeInitializer {
   private void initializeTmpDirectory(final Path storageDirectory) throws IOException {
     final Path tmpDir = storageDirectory.resolve(TMP_DIR);
 
-    LOG.info("Initializing volume trash directory");
+    LOG.info("Initializing volume temp directory");
 
     if (Files.isDirectory(tmpDir)) {
-      LOG.info("Deleting existing tmp dir: [{}]", tmpDir);
+      LOG.info("Deleting existing temp dir: [{}]", tmpDir);
       Files.walk(tmpDir).sorted(Comparator.reverseOrder()).map(Path::toFile).peek(f -> {
-        LOG.debug("Deleting tmp file: [{}]", f);
+        LOG.debug("Deleting temp file: [{}]", f);
       }).forEach(File::delete);
     }
 

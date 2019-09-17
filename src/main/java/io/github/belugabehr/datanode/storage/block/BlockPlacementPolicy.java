@@ -6,11 +6,11 @@ import java.nio.file.Paths;
 
 import org.springframework.stereotype.Component;
 
-import com.cloudera.datanode.domain.DataNodeDomain.BlockIdentifier;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 
+import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockIdentifier;
 import io.github.belugabehr.datanode.storage.Volume;
 
 @Component
@@ -20,7 +20,6 @@ public class BlockPlacementPolicy {
   private final HashFunction hf = Hashing.md5();
 
   public Path generateBlockPath(final Volume volume, final BlockIdentifier blockID) throws IOException {
-
     final HashCode hc = hf.newHasher().putLong(blockID.getBlockId()).hash();
     final String hashHexString = hc.toString().toUpperCase();
     final String levelOne = "0" + hashHexString.substring(0, 1);
