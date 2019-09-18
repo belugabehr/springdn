@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -17,12 +18,18 @@ import org.springframework.stereotype.Service;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
+import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockIdentifier;
 import io.github.belugabehr.datanode.storage.block.BlockManager;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 
 @Service
 public class StorageBalancerService implements Runnable {
 
   private static final double MIN_RANGE = 0.10;
+
+  @Autowired
+  private MeterRegistry meterRegisty;
 
   @Autowired
   @Qualifier("globalScheduledTaskExecutor")
@@ -34,8 +41,11 @@ public class StorageBalancerService implements Runnable {
   @Autowired
   private BlockManager blockManager;
 
+  private Counter blocksMovedCounter;
+
   @PostConstruct
   public void init() {
+    this.blocksMovedCounter = this.meterRegisty.counter("datanode.storage.blocks.balanced");
     this.executorService.scheduleWithFixedDelay(this, 1L, 1L, TimeUnit.MINUTES);
   }
 
@@ -62,11 +72,13 @@ public class StorageBalancerService implements Runnable {
       final Volume maxUtilization = Iterables.getLast(volumes);
       final Volume minUtilization = volumes.iterator().next();
 
-      if (!triggersBlockMove(maxUtilization, minUtilization)) {
-        continue;
+      if (triggersBlockMove(maxUtilization, minUtilization)) {
+        final Optional<BlockIdentifier> blockId =
+            blockManager.relocateAnyBlock(maxUtilization, minUtilization, TimeUnit.HOURS, 1L);
+        if (blockId.isPresent()) {
+          this.blocksMovedCounter.increment();
+        }
       }
-
-      blockManager.relocateAnyBlock(maxUtilization, minUtilization, TimeUnit.HOURS, 1L);
     }
   }
 

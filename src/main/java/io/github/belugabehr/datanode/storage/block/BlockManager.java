@@ -137,7 +137,7 @@ public class BlockManager {
     return this.blockMetaDataService.getBlockChecksum(blockID, false);
   }
 
-  public void relocateAnyBlock(final Volume srcVolume, final Volume dstVolume, final TimeUnit unit,
+  public Optional<BlockIdentifier> relocateAnyBlock(final Volume srcVolume, final Volume dstVolume, final TimeUnit unit,
       final long duration) {
     final String srcVolumeId = srcVolume.getId().toString();
 
@@ -148,21 +148,24 @@ public class BlockManager {
         if (age < unit.toSeconds(duration)) {
           continue;
         }
+
         final Collection<String> blockVolumeIds = blockMeta.getStorageInfo().getVolumeIdList();
 
         if (blockVolumeIds.size() == 1) {
           final String blockVolumeId = Iterables.getOnlyElement(blockVolumeIds);
           if (srcVolumeId.equals(blockVolumeId)) {
             relocateBlock(blockMeta.getBlockId(), dstVolume);
+            return Optional.of(blockMeta.getBlockId());
           }
         }
       }
     } catch (Exception e) {
       LOG.error("Error", e);
     }
+    return Optional.empty();
   }
 
-  public void relocateBlock(final BlockIdentifier blockId, final Volume dstVolume) throws IOException {
+  public boolean relocateBlock(final BlockIdentifier blockId, final Volume dstVolume) throws IOException {
     final Optional<BlockMetaData> bm = this.blockMetaDataService.getBlockMetaData(blockId, true);
 
     if (bm.isPresent()) {
@@ -180,7 +183,10 @@ public class BlockManager {
       this.blockMetaDataService.updateBlock(updateBlockMetaData);
 
       this.blockStorageService.finalizeBlock(blockId, cpyFile, dstVolume);
+
+      return true;
     }
+    return false;
   }
 
 }
