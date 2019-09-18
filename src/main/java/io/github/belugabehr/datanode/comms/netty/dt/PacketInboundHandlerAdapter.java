@@ -106,7 +106,7 @@ public class PacketInboundHandlerAdapter extends ChannelInboundHandlerAdapter {
         // Number of byte written should line up with the last offset
         Preconditions.checkState(this.checksums.getCount() == header.getOffsetInBlock());
 
-        blockManager.finalizeBlock(this.blockID, this.blockHandle, Math.toIntExact(this.checksums.getCount()),
+        blockManager.finalizeBlock(this.blockID, this.blockHandle, this.checksums.getCount(),
             this.checksums.getBlockSize(), this.checksums.getChecksums());
       } catch (IOException e) {
         LOG.error("Error", e);

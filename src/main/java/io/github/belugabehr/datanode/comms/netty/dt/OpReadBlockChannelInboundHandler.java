@@ -1,6 +1,7 @@
 package io.github.belugabehr.datanode.comms.netty.dt;
 
 import java.nio.channels.FileChannel;
+import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.BlockOpResponseProto;
@@ -36,21 +37,21 @@ public class OpReadBlockChannelInboundHandler extends DefaultSimpleChannelInboun
     // Checksum - Payload
     final BlockManager blockManager = getStorageManager(ctx);
     final Pair<BlockMetaData, FileChannel> metaAndPayload = blockManager.getBlock(op);
-    final ChecksumInfo checksumInfo = blockManager.getBlockChecksum(metaAndPayload.getKey().getBlockId());
+    final Optional<ChecksumInfo> checksumInfo = blockManager.getBlockChecksum(metaAndPayload.getKey().getBlockId());
 
     // TODO: Validate offset+length is less than block length
 
     final FileChannel bfc = metaAndPayload.getRight();
 
     final BlockPacketWriter packetWriter = BlockPacketWriter.newBuilder().source(bfc)
-        .checksums(checksumInfo.getChecksumChunks().toByteArray())
-        .checksumChunkSize(checksumInfo.getChecksumChunkSize()).targetPayloadSize(8 * (8192 + Ints.BYTES))
+        .checksums(checksumInfo.get().getChecksumChunks().toByteArray())
+        .checksumChunkSize(checksumInfo.get().getChecksumChunkSize()).targetPayloadSize(8 * (8192 + Ints.BYTES))
         .readOffset(Math.toIntExact(op.getOffset())).readLength(Math.toIntExact(op.getLen())).build();
 
     final BlockOpResponseProto response = BlockOpResponseProto
         .newBuilder().setStatus(Status.SUCCESS).setReadOpChecksumInfo(ReadOpChecksumInfoProto.newBuilder()
             .setChunkOffset(packetWriter.getFilePosition()).setChecksum(ChecksumProto.newBuilder()
-                .setBytesPerChecksum(checksumInfo.getChecksumChunkSize()).setType(ChecksumTypeProto.CHECKSUM_CRC32C).build())
+                .setBytesPerChecksum(checksumInfo.get().getChecksumChunkSize()).setType(ChecksumTypeProto.CHECKSUM_CRC32C).build())
             .build())
         .build();
 

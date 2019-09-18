@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Collection;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -18,7 +19,6 @@ import org.springframework.stereotype.Service;
 import com.google.common.base.Optional;
 
 import io.github.belugabehr.datanode.domain.DataNodeDomain.BlockIdentifier;
-import io.github.belugabehr.datanode.domain.DataNodeDomain.StorageInfo;
 import io.github.belugabehr.datanode.storage.StorageManager;
 import io.github.belugabehr.datanode.storage.Volume;
 import io.github.belugabehr.datanode.util.WatchedFileChannel;
@@ -48,7 +48,7 @@ public class BlockStorageService {
     final RandomAccessFile rf = new RandomAccessFile(blockTmpFilePath.toFile(), "rw");
     final FileChannel channel = WatchedFileChannel.watch(volume, rf.getChannel());
 
-    return new BlockHandle(blockId, volume, channel, blockTmpFilePath);
+    return new BlockHandle(blockId, volumeGroupId, volume, channel, blockTmpFilePath);
   }
 
   /**
@@ -77,7 +77,7 @@ public class BlockStorageService {
     throw new BlockNotFoundException();
   }
 
-  public void finalizeBlock(final BlockHandle handle, final int bytesWritten) throws IOException {
+  public void finalizeBlock(final BlockHandle handle, final long bytesWritten) throws IOException {
     try (FileChannel channel = handle.getFileChannel()) {
       channel.truncate(bytesWritten);
     }
@@ -106,37 +106,44 @@ public class BlockStorageService {
     }
   }
 
-  public void deleteBlock(final BlockIdentifier blockID, final String volumeId) throws IOException {
-    LOG.info("Delete from volume [{}]: block {}", volumeId, blockID);
-    final Optional<Volume> volume = this.volumeManager.getVolume(UUID.fromString(volumeId));
-    if (volume.isPresent()) {
-      final Path finalBlockPath = this.placementPolicy.generateBlockPath(volume.get(), blockID);
-      try {
-        Files.delete(finalBlockPath);
-      } catch (NoSuchFileException nsfe) {
-        LOG.info("Attempting to delete file which is already deleted: {}", blockID);
-      } catch (IOException ioe) {
-        volume.get().reportError(ioe);
-        throw ioe;
+  public void deleteBlock(final BlockIdentifier blockId, final Collection<String> volumeIds) throws IOException {
+    LOG.info("Delete from volumes [{}]: block {}", volumeIds, blockId);
+    for (final String volumeId : volumeIds) {
+      final Optional<Volume> volume = this.volumeManager.getVolume(UUID.fromString(volumeId));
+      if (volume.isPresent()) {
+        final Path finalBlockPath = this.placementPolicy.generateBlockPath(volume.get(), blockId);
+        try {
+          Files.delete(finalBlockPath);
+        } catch (NoSuchFileException nsfe) {
+          LOG.info("Attempting to delete file which is already deleted: {}", blockId);
+        } catch (IOException ioe) {
+          volume.get().reportError(ioe);
+          throw ioe;
+        }
       }
     }
   }
 
-  public Path copyBlock(final BlockIdentifier blockId, final StorageInfo storageInfo, final Volume dstVolume)
+  public Path copyBlock(final BlockIdentifier blockId, final Collection<String> volumeIds, final Volume dstVolume)
       throws IOException {
 
-    final UUID volumeId = UUID.fromString(storageInfo.getVolumeId());
+    for (final String volumeIdStr : volumeIds) {
+      final UUID volumeId = UUID.fromString(volumeIdStr);
 
-    final Optional<Volume> srcVolume = this.volumeManager.getVolume(volumeId);
+      final Optional<Volume> srcVolume = this.volumeManager.getVolume(volumeId);
 
-    if (srcVolume.isPresent()) {
-      final Path currentBlockPath = this.placementPolicy.generateBlockPath(srcVolume.get(), blockId);
+      if (srcVolume.isPresent()) {
+        final Path currentBlockPath = this.placementPolicy.generateBlockPath(srcVolume.get(), blockId);
 
-      final Path blockTmpFilePath = dstVolume.getTempFile();
+        final Path blockTmpFilePath = dstVolume.getTempFile();
 
-      Files.copy(currentBlockPath, blockTmpFilePath);
-
-      return blockTmpFilePath;
+        try {
+          Files.copy(currentBlockPath, blockTmpFilePath);
+          return blockTmpFilePath;
+        } catch (IOException ioe) {
+          LOG.warn("Failed to copy file");
+        }
+      }
     }
 
     return null;

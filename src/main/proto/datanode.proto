@@ -22,7 +22,7 @@ message BlockMetaData {
 
 message StorageInfo {
   string volumeGroupId = 1;
-  string volumeId = 2;
+  repeated string volumeId = 2;
   int32 blockSize = 3;
 }
 

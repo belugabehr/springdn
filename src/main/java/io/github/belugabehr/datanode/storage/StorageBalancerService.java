@@ -66,7 +66,7 @@ public class StorageBalancerService implements Runnable {
         continue;
       }
 
-      blockManager.relocateAnyBlock(maxUtilization, minUtilization);
+      blockManager.relocateAnyBlock(maxUtilization, minUtilization, TimeUnit.HOURS, 1L);
     }
   }
 

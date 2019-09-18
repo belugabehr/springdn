@@ -20,7 +20,7 @@ public class BlockStatsInitializer {
     try (final BlockMetaIterator blockMetas = this.blockMetaDataService.getBlockMetaData()) {
       while (blockMetas.hasNext()) {
         final BlockMetaData blockMeta = blockMetas.next();
-        this.statsManager.blockCount(blockMeta.getStorageInfo().getVolumeId(),
+        this.statsManager.blockCount(blockMeta.getStorageInfo().getVolumeId(0),
             blockMeta.getBlockId().getBlockPoolId(), blockMeta.getStorageInfo().getBlockSize());
       }
     }
