@@ -71,7 +71,7 @@ public class StorageManager implements VolumeGroupChangeListener {
       final Collection<Path> availableVolumes = doDiscoverVolumes(storageDirectory);
       availableVolumes.forEach(volume -> {
         try {
-          addVolume(volumeGroup, volume, volumeGroupProperties.getReserved());
+          addVolume(volumeGroup, volume);
         } catch (IOException ioe) {
           LOG.error("Could not initialize and register a volume [{}]. Skipped.", volume, ioe);
         }
@@ -94,16 +94,16 @@ public class StorageManager implements VolumeGroupChangeListener {
     volumeGroup.setName(volumeGroupName);
     volumeGroup.setDescription(properties.getDescription());
     volumeGroup.setMountDirectory(mountDirectory);
+    volumeGroup.setReservedSpace(properties.getReserved());
 
     this.volumeGroups.put(volumeGroupId, volumeGroup);
 
     return volumeGroup;
   }
 
-  public Volume addVolume(final VolumeGroup volumeGroup, final Path volumePath, final double reservedSpace)
-      throws IOException {
+  public Volume addVolume(final VolumeGroup volumeGroup, final Path volumePath) throws IOException {
     final UUID volumeId = this.volumeInitializer.init(volumePath);
-    final Volume volume = new DefaultVolume(volumeId, volumePath, reservedSpace);
+    final Volume volume = new DefaultVolume(volumeId, volumePath, volumeGroup.getReservedSpace());
 
     volumeGroup.getVolumes().put(volumeId, volume);
     this.volumes.put(volumeId, volume);
@@ -113,7 +113,7 @@ public class StorageManager implements VolumeGroupChangeListener {
 
   @Override
   public void volumeAdded(final VolumeGroup volumeGroup, final Path child) throws IOException {
-    addVolume(volumeGroup, child, 0.0);
+    addVolume(volumeGroup, child);
   }
 
   public Volume getNextAvailableVolume(final UUID volumeGroupId, final long requestedBlockSize) {

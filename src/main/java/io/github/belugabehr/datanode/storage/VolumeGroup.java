@@ -12,6 +12,7 @@ public class VolumeGroup {
   private String name;
   private String description;
   private Path mountDirectory;
+  private double reservedSpace;
   private Map<UUID, Volume> volumes = Maps.newConcurrentMap();
 
   public UUID getId() {
@@ -49,16 +50,18 @@ public class VolumeGroup {
   public void setMountDirectory(Path mountDirectory) {
     this.mountDirectory = mountDirectory;
   }
-  
+
   public Path getMountDirectory() {
     return this.mountDirectory;
-    
+
   }
 
-  @Override
-  public String toString() {
-    return "VolumeGroup [id=" + id + ", name=" + name + ", description=" + description + ", mountDirectory="
-        + mountDirectory + ", volumes=" + volumes + "]";
+  public double getReservedSpace() {
+    return reservedSpace;
+  }
+
+  public void setReservedSpace(double reservedSpace) {
+    this.reservedSpace = reservedSpace;
   }
 
   public long getTotalSpace() {
@@ -85,15 +88,18 @@ public class VolumeGroup {
    * @return true if this volume group is in a failed state; false otherwise
    */
   public boolean isFailed() {
-    if (this.volumes.isEmpty()) {
-      return true;
-    }
     for (final Volume volume : this.volumes.values()) {
       if (!volume.isFailed()) {
         return false;
       }
     }
     return true;
+  }
+
+  @Override
+  public String toString() {
+    return "VolumeGroup [id=" + id + ", name=" + name + ", description=" + description + ", mountDirectory="
+        + mountDirectory + ", reservedSpace=" + reservedSpace + ", volumes=" + volumes + "]";
   }
 
   @Override
