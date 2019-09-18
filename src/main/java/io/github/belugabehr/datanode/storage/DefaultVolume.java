@@ -15,16 +15,18 @@ public class DefaultVolume implements Volume {
 
   private static final Path TMP_DIR = Path.of("tmp");
 
+  private final UUID id;
   private final Path dataPath;
+  private final double reservedSpace;
   private final Path tmpDir;
   private final FileStore fileStore;
   private final LongAdder ioErrorCount;
 
-  private UUID id;
-
-  public DefaultVolume(final UUID id, final Path dataPath) {
+  public DefaultVolume(final UUID id, final Path dataPath, final double reservedSpace) {
+    Preconditions.checkArgument(reservedSpace >= 0.0 && reservedSpace <= 1.0);
     this.id = id;
     this.dataPath = dataPath;
+    this.reservedSpace = reservedSpace;
     this.tmpDir = this.dataPath.resolve(TMP_DIR);
     this.fileStore = determineFileStore(dataPath);
     this.ioErrorCount = new LongAdder();
@@ -53,7 +55,7 @@ public class DefaultVolume implements Volume {
   @Override
   public long getUsableSpace() {
     try {
-      return this.fileStore.getUsableSpace();
+      return (long) (this.reservedSpace * this.fileStore.getUsableSpace());
     } catch (IOException e) {
       return 0L;
     }
@@ -61,7 +63,7 @@ public class DefaultVolume implements Volume {
 
   public long getTotalSpace() {
     try {
-      return this.fileStore.getTotalSpace();
+      return (long) (this.reservedSpace * this.fileStore.getTotalSpace());
     } catch (IOException e) {
       return 0L;
     }

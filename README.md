@@ -83,6 +83,9 @@ datanode:
         # storage group. All volumes allocated to this storage group should be mounted
         # as a sub-directory. This directory must exist be writeable by SpringDN.
         directory: "/data"
+
+        # The percent amount of space on each volume to reserve for other applications
+        reserved: 0.20
   dfs:
     # List of HDFS NameNodes
     # Must be proper URI with 'hdfs' scheme

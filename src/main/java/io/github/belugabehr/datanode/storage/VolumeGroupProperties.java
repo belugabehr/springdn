@@ -4,6 +4,7 @@ public class VolumeGroupProperties {
 
   private String description;
   private String directory;
+  private double reserved;
 
   public String getDescription() {
     return description;
@@ -21,9 +22,18 @@ public class VolumeGroupProperties {
     this.directory = directory;
   }
 
+  public double getReserved() {
+    return reserved;
+  }
+
+  public void setReserved(double reserved) {
+    this.reserved = reserved;
+  }
+
   @Override
   public String toString() {
-    return "StorageDetails [description=" + description + ", directory=" + directory + "]";
+    return "VolumeGroupProperties [description=" + description + ", directory=" + directory + ", reserved=" + reserved
+        + "]";
   }
 
 }

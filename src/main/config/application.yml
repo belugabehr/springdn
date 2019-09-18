@@ -20,6 +20,7 @@ datanode:
       default:
         description: "Default location for blocks"
         directory: "/data"
+        reserved: 0.20
   dfs:
     servers:
       - "hdfs://127.0.0.1:8022"
