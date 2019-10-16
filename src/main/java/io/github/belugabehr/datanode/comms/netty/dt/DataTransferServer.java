@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import io.github.belugabehr.datanode.IpcProperties;
-import io.github.belugabehr.datanode.has.Metrics;
+import io.github.belugabehr.datanode.comms.nn.hb.Metrics;
 import io.github.belugabehr.datanode.storage.block.BlockManager;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.netty.bootstrap.ServerBootstrap;

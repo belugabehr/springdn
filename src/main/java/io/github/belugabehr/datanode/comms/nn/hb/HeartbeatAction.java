@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import io.github.belugabehr.datanode.blockpool.BlockPoolManager;
 import io.github.belugabehr.datanode.comms.nn.NameNodeConnectionPool;
 import io.github.belugabehr.datanode.events.InvalidateBlockListener;
-import io.github.belugabehr.datanode.has.Metrics;
 import io.github.belugabehr.datanode.storage.StorageManager;
 import io.github.belugabehr.datanode.storage.VolumeGroup;
 import io.github.belugabehr.datanode.util.HadoopCompatible;

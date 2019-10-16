@@ -1,4 +1,4 @@
-package io.github.belugabehr.datanode.has;
+package io.github.belugabehr.datanode.comms.nn.hb;
 
 public enum Metrics {
 
