@@ -35,6 +35,8 @@ public class StorageManager implements VolumeGroupChangeListener {
 
   private static final Logger LOG = LoggerFactory.getLogger(StorageManager.class);
 
+  private static final Path NAMESPACE = Path.of("dfs");
+
   @Autowired
   private MeterRegistry meterRegisty;
 
@@ -102,8 +104,9 @@ public class StorageManager implements VolumeGroupChangeListener {
   }
 
   public Volume addVolume(final VolumeGroup volumeGroup, final Path volumePath) throws IOException {
-    final UUID volumeId = this.volumeInitializer.init(volumePath);
-    final Volume volume = new DefaultVolume(volumeId, volumePath, volumeGroup.getReservedSpace());
+    final Path namespacePath = volumePath.resolve(NAMESPACE);
+    final UUID volumeId = this.volumeInitializer.init(namespacePath);
+    final Volume volume = new DefaultVolume(volumeId, namespacePath, volumeGroup.getReservedSpace());
 
     volumeGroup.getVolumes().put(volumeId, volume);
     this.volumes.put(volumeId, volume);

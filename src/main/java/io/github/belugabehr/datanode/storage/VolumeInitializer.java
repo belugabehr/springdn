@@ -16,8 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.google.common.base.Preconditions;
-
 @Component
 public class VolumeInitializer {
 
@@ -27,8 +25,8 @@ public class VolumeInitializer {
   private static final Path TMP_DIR = Path.of("tmp");
 
   public UUID init(final Path storageDirectory) throws IOException {
-    Preconditions.checkArgument(Files.isDirectory(storageDirectory));
-
+    LOG.debug("Initializing directory: {}", storageDirectory);
+    Files.createDirectory(storageDirectory);
     final Path idFile = storageDirectory.resolve(ID_FILE);
     final Optional<UUID> volumeGroupId = extractId(idFile);
     if (volumeGroupId.isPresent()) {
@@ -62,9 +60,10 @@ public class VolumeInitializer {
 
     LOG.info("Initializing volume located at: {}", storageDirectory);
 
-    Files.walk(storageDirectory).filter(p -> !p.equals(storageDirectory)).sorted(Comparator.reverseOrder()).map(Path::toFile).peek(f -> {
-      LOG.debug("Deleting file: [{}]", f);
-    }).forEach(File::delete);
+    Files.walk(storageDirectory).filter(p -> !p.equals(storageDirectory)).sorted(Comparator.reverseOrder())
+        .map(Path::toFile).peek(f -> {
+          LOG.debug("Deleting file: [{}]", f);
+        }).forEach(File::delete);
 
     LOG.info("Writing volume ID to file [{}][{}]", volumeId, idFile);
     Files.writeString(idFile, volumeId.toString(), StandardCharsets.UTF_8, StandardOpenOption.CREATE,
