@@ -26,7 +26,9 @@ public class VolumeInitializer {
 
   public UUID init(final Path storageDirectory) throws IOException {
     LOG.debug("Initializing directory: {}", storageDirectory);
-    Files.createDirectory(storageDirectory);
+    if (Files.notExists(storageDirectory)) {
+      Files.createDirectory(storageDirectory);
+    }
     final Path idFile = storageDirectory.resolve(ID_FILE);
     final Optional<UUID> volumeGroupId = extractId(idFile);
     if (volumeGroupId.isPresent()) {
