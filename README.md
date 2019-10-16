@@ -104,6 +104,17 @@ management:
     web:
       exposure:
         include: "info,health,metrics,threaddump,configprops"
+
+# Enable service discovery through ZooKeeper (default: false)
+# When enabled, use the Web UI port to determine the relevant IPC ports
+# http://localhost:8080/actuator/configprops
+spring:
+  cloud:
+    zookeeper:
+      enabled: false
+      connect-string: localhost:2181
+  application:
+    name: "data-node"
 ```
 
 ## SpringDN Design
