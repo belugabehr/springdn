@@ -16,13 +16,13 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import io.github.belugabehr.datanode.meta.block.BlockReportScanner;
-import io.github.belugabehr.datanode.registration.RegistrationService;
+import io.github.belugabehr.datanode.registration.NameNodeRegistrationService;
 
 @SpringBootApplication
 public class Application implements CommandLineRunner {
 
   @Autowired
-  private RegistrationService registrationService;
+  private NameNodeRegistrationService registrationService;
 
   @Autowired
   private BlockReportScanner blockReportScanner;

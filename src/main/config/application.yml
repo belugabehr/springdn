@@ -28,6 +28,12 @@ datanode:
 spring:
   main:
     banner-mode: "off"
+  cloud:
+    zookeeper:
+      enabled: false
+      connect-string: localhost:2181
+  application:
+    name: "data-node"
 
 server:
   port: 8080

@@ -25,8 +25,8 @@ import io.github.belugabehr.datanode.domain.DataNodeDomain.DataNodeInfo;
 import io.github.belugabehr.datanode.meta.dfs.DfsMetaDataService;
 
 @Service
-public class RegistrationService {
-  private static final Logger LOG = LoggerFactory.getLogger(RegistrationService.class);
+public class NameNodeRegistrationService {
+  private static final Logger LOG = LoggerFactory.getLogger(NameNodeRegistrationService.class);
 
   @Autowired
   private NameNodeConnectionPool connections;
