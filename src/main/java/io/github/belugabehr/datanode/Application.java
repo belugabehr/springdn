@@ -15,7 +15,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import io.github.belugabehr.datanode.has.BlockStatsInitializer;
 import io.github.belugabehr.datanode.meta.block.BlockReportScanner;
 import io.github.belugabehr.datanode.registration.RegistrationService;
 
@@ -28,12 +27,8 @@ public class Application implements CommandLineRunner {
   @Autowired
   private BlockReportScanner blockReportScanner;
 
-  @Autowired
-  private BlockStatsInitializer blockStatsInitializer;
-
   @Override
   public void run(final String... args) throws Exception {
-    blockStatsInitializer.init();
     registrationService.register();
     blockReportScanner.scan(TimeUnit.SECONDS, 0L);
   }
