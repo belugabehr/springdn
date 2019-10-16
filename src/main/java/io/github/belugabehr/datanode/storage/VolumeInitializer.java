@@ -77,7 +77,7 @@ public class VolumeInitializer {
   private void initializeTmpDirectory(final Path storageDirectory) throws IOException {
     final Path tmpDir = storageDirectory.resolve(TMP_DIR);
 
-    LOG.info("Initializing volume temp directory");
+    LOG.info("Initializing volume temp directory: [{}]", tmpDir);
 
     if (Files.isDirectory(tmpDir)) {
       LOG.info("Deleting existing temp dir: [{}]", tmpDir);
@@ -86,7 +86,7 @@ public class VolumeInitializer {
       }).forEach(File::delete);
     }
 
-    LOG.info("Creating new tmp directory: [{}]", tmpDir);
+    LOG.debug("Creating new tmp directory: [{}]", tmpDir);
     Files.createDirectory(tmpDir);
   }
 
